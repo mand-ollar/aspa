@@ -1,3 +1,3 @@
 # aspa
 
-Audio Signal Processing and Analysis Libray 🎧
+Audio Signal Processing and Analysis Library 🎧
