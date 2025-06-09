@@ -1,2 +1,3 @@
-# DASPA
-Daniel's Audio Signal Processing and Analysis Libray 🎧
+# aspa
+
+Audio Signal Processing and Analysis Libray 🎧
