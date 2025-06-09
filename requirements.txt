@@ -1,0 +1,6 @@
+numpy
+pandas
+ruff
+setuptools
+torch
+types-setuptools
