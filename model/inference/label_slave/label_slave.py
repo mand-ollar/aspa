@@ -4,6 +4,7 @@ from typing import Literal
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
 from utils.printings import Colors
 
 from .config import LabelSlaveConfig

@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torchaudio  # type: ignore
-
 from aspa.model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
 
 

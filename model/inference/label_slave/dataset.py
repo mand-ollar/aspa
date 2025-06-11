@@ -4,7 +4,7 @@ import soundfile as sf  # type: ignore
 import torch
 from torch.utils.data import Dataset
 
-from utils.format_audio import format_audio
+from utils.audio.format_audio import format_audio
 
 
 class LabelSlaveDataset(Dataset):
@@ -22,7 +22,7 @@ class LabelSlaveDataset(Dataset):
 
         self.audio: torch.Tensor
         if wav_path is not None:
-            _audio, _sr = sf.read(file=wav_path, dtype="float32")
+            _audio, _sr = sf.read(file=str(wav_path), dtype="float32")
             self.audio = torch.from_numpy(_audio).float()
             audio_sr = _sr
         elif audio is not None:

@@ -9,6 +9,8 @@ soundfile
 torch
 torchaudio
 torchvision
+tqdm
 types-pyaudio
 types-PyYAML
 types-setuptools
+types-tqdm
