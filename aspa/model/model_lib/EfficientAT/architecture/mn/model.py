@@ -5,7 +5,7 @@ from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 import torch.nn.functional as F
 from torch import Tensor, nn
 from torch.hub import load_state_dict_from_url
-from torchvision.ops.misc import ConvNormActivation
+from torchvision.ops.misc import ConvNormActivation  # type: ignore
 
 from .attention_pooling import MultiHeadAttentionPooling
 from .block_types import InvertedResidual, InvertedResidualConfig

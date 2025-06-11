@@ -8,7 +8,8 @@ from typing import Iterator
 import numpy as np
 import pyaudio
 import soundfile as sf  # type: ignore
-from utils.printings import Colors
+
+from aspa.utils.printings import Colors
 
 from .microphones import LocalMicrophone, RemoteMicrophone
 
@@ -110,10 +111,10 @@ class RemoteMicrophoneService(MicrophoneService):
 
 
 class RecordService:
-    def __init__(self, filepath: Path, mic_service: MicrophoneService, sr: int, record_event: threading.Event) -> None:
+    def __init__(self, filepath: Path, mic_service: MicrophoneService, record_event: threading.Event) -> None:
         self.filepath: Path = filepath
         self.mic_service: MicrophoneService = mic_service
-        self.sr: int = sr
+        self.sr: int = mic_service.sr
         self.record_event: threading.Event = record_event
 
         self.tmp_filepath: Path

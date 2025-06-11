@@ -3,7 +3,7 @@ from typing import Callable, Dict, List
 import torch
 import torch.nn as nn
 from torch import Tensor
-from torchvision.ops.misc import ConvNormActivation
+from torchvision.ops.misc import ConvNormActivation  # type: ignore
 
 from .utils import cnn_out_size, make_divisible
 

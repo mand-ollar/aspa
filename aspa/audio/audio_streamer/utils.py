@@ -1,7 +1,8 @@
 from typing import Mapping
 
 import pyaudio
-from utils.select_option import select_option
+
+from aspa.utils.select_option import select_option
 
 from .microphones import LocalMicrophone
 from .service import LocalMicrophoneService
