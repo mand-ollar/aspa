@@ -1,5 +1,7 @@
 numpy
 pandas
+PyAudio
+pydantic
 PyYAML
 ruff
 setuptools
@@ -7,5 +9,6 @@ soundfile
 torch
 torchaudio
 torchvision
+types-pyaudio
 types-PyYAML
 types-setuptools
