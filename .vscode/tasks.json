@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "Format & Sort All Code: Ruff",
-            "command": "ruff check . --fix",
+            "command": "ruff check . --fix && ruff format .",
             "type": "shell",
             "problemMatcher": [],
             "group": {
