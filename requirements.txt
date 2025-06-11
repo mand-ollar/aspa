@@ -1,6 +1,11 @@
 numpy
 pandas
+PyYAML
 ruff
 setuptools
+soundfile
 torch
+torchaudio
+torchvision
+types-PyYAML
 types-setuptools
