@@ -1,3 +1,5 @@
+audiomentations
+librosa
 numpy
 pandas
 PyAudio
