@@ -1,3 +1,4 @@
+from .audio_augs import AudioAug
 from .noise.background import BackgroundNoise
 from .noise.color import ColorNoise
 from .noise.gaussian import GaussianNoise
@@ -15,6 +16,7 @@ from .transform.shift import TimeShift
 from .transform.time_mask import TimeMask
 
 __all__ = [
+    "AudioAug",
     "BackgroundNoise",
     "ColorNoise",
     "GaussianNoise",
