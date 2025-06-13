@@ -13,7 +13,9 @@ def _load_local_microphones() -> list[LocalMicrophone]:
     p: pyaudio.PyAudio = pyaudio.PyAudio()
 
     for device_idx in range(p.get_device_count()):
-        device: Mapping[str, str | int | float] = p.get_device_info_by_index(device_index=device_idx)
+        device: Mapping[str, str | int | float] = p.get_device_info_by_index(
+            device_index=device_idx
+        )
 
         max_input_channels: str | int | float | None = device.get("maxInputChannels")
         assert isinstance(max_input_channels, int)
@@ -29,7 +31,9 @@ def setup_microphone(chunk_sec: float, sr: int) -> LocalMicrophoneService:
     mic_list: list[LocalMicrophone] = _load_local_microphones()
     mic_name_list: list[str] = [mic.name for mic in mic_list]
 
-    selected_idx: int = select_option(options=mic_name_list, description="Select microphone")
+    selected_idx: int = select_option(
+        options=mic_name_list, description="Select microphone"
+    )
 
     selected_mic = mic_list[selected_idx]
     selected_channel: int
