@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from utils.printings import Colors
+from aspa.utils.printings import Colors
 
 from .config import LabelSlaveConfig
 from .dataset import LabelSlaveDataset

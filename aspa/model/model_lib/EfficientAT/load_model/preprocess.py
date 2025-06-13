@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torchaudio  # type: ignore
 
-from model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
+from aspa.model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
 
 
 class AugmentMelSTFT(nn.Module):
