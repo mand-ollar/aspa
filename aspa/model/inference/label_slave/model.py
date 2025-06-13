@@ -2,8 +2,8 @@ from pathlib import Path
 
 import torch.nn as nn
 
-from model.model_lib.EfficientAT.load_model import EfficientDyATParams, ModelOutput, load_efficientdyat
-from model.model_wrapper import ModelWrapper
+from aspa.model.model_lib.EfficientAT.load_model import EfficientDyATParams, ModelOutput, load_efficientdyat
+from aspa.model.model_wrapper import ModelWrapper
 
 
 class EfficientAT(ModelWrapper):

@@ -9,7 +9,7 @@ import numpy as np
 import pyaudio
 import soundfile as sf  # type: ignore
 
-from utils.printings import Colors
+from aspa.utils.printings import Colors
 
 from .microphones import LocalMicrophone, RemoteMicrophone
 

@@ -4,7 +4,7 @@ import soundfile as sf  # type: ignore
 import torch
 from torch.utils.data import Dataset
 
-from utils.audio.format_audio import format_audio
+from aspa.utils.audio.format_audio import format_audio
 
 
 class LabelSlaveDataset(Dataset):
