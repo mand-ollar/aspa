@@ -47,9 +47,15 @@ pretrained_models = {
     "mn40_as": urllib.parse.urljoin(model_url, "mn40_as_mAP_484.pt"),
     "mn40_as(2)": urllib.parse.urljoin(model_url, "mn40_as_mAP_483.pt"),
     "mn40_as(3)": urllib.parse.urljoin(model_url, "mn40_as_mAP_483(2).pt"),
-    "mn40_as_no_im_pre": urllib.parse.urljoin(model_url, "mn40_as_no_im_pre_mAP_483.pt"),
-    "mn40_as_no_im_pre(2)": urllib.parse.urljoin(model_url, "mn40_as_no_im_pre_mAP_483(2).pt"),
-    "mn40_as_no_im_pre(3)": urllib.parse.urljoin(model_url, "mn40_as_no_im_pre_mAP_482.pt"),
+    "mn40_as_no_im_pre": urllib.parse.urljoin(
+        model_url, "mn40_as_no_im_pre_mAP_483.pt"
+    ),
+    "mn40_as_no_im_pre(2)": urllib.parse.urljoin(
+        model_url, "mn40_as_no_im_pre_mAP_483(2).pt"
+    ),
+    "mn40_as_no_im_pre(3)": urllib.parse.urljoin(
+        model_url, "mn40_as_no_im_pre_mAP_482.pt"
+    ),
     "mn40_as_ext": urllib.parse.urljoin(model_url, "mn40_as_ext_mAP_487.pt"),
     "mn40_as_ext(2)": urllib.parse.urljoin(model_url, "mn40_as_ext_mAP_486.pt"),
     "mn40_as_ext(3)": urllib.parse.urljoin(model_url, "mn40_as_ext_mAP_485.pt"),
@@ -103,15 +109,24 @@ class MN(nn.Module):
             raise ValueError("The inverted_residual_setting should not be empty")
         elif not (
             isinstance(inverted_residual_setting, Sequence)
-            and all([isinstance(s, InvertedResidualConfig) for s in inverted_residual_setting])
+            and all(
+                [
+                    isinstance(s, InvertedResidualConfig)
+                    for s in inverted_residual_setting
+                ]
+            )
         ):
-            raise TypeError("The inverted_residual_setting should be List[InvertedResidualConfig]")
+            raise TypeError(
+                "The inverted_residual_setting should be List[InvertedResidualConfig]"
+            )
 
         if block is None:
             block = InvertedResidual
 
         depthwise_norm_layer = norm_layer = (
-            norm_layer if norm_layer is not None else partial(nn.BatchNorm2d, eps=0.001, momentum=0.01)
+            norm_layer
+            if norm_layer is not None
+            else partial(nn.BatchNorm2d, eps=0.001, momentum=0.01)
         )
 
         layers: List[nn.Module] = []
@@ -170,12 +185,19 @@ class MN(nn.Module):
         self.head_type = kwargs.get("head_type", False)
         if self.head_type == "multihead_attention_pooling":
             self.classifier = MultiHeadAttentionPooling(
-                lastconv_output_channels, num_classes, num_heads=kwargs.get("multihead_attention_heads")
+                lastconv_output_channels,
+                num_classes,
+                num_heads=kwargs.get("multihead_attention_heads"),
             )
         elif self.head_type == "fully_convolutional":
             self.classifier = nn.Sequential(
                 nn.Conv2d(
-                    lastconv_output_channels, num_classes, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0), bias=False
+                    lastconv_output_channels,
+                    num_classes,
+                    kernel_size=(1, 1),
+                    stride=(1, 1),
+                    padding=(0, 0),
+                    bias=False,
                 ),
                 nn.BatchNorm2d(num_classes),
                 nn.AdaptiveAvgPool2d((1, 1)),
@@ -230,7 +252,9 @@ class MN(nn.Module):
         else:
             return x, features
 
-    def forward(self, x: Tensor) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, List[Tensor]]]:
+    def forward(
+        self, x: Tensor
+    ) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, List[Tensor]]]:
         return self._forward_impl(x)
 
 
@@ -245,7 +269,9 @@ def _mobilenet_v3_conf(
     dilation = 2 if dilated else 1
 
     bneck_conf = partial(InvertedResidualConfig, width_mult=width_mult)
-    adjust_channels = partial(InvertedResidualConfig.adjust_channels, width_mult=width_mult)
+    adjust_channels = partial(
+        InvertedResidualConfig.adjust_channels, width_mult=width_mult
+    )
 
     # InvertedResidualConfig:
     # input_channels, kernel, expanded_channels, out_channels, use_se, activation, stride, dilation
@@ -262,9 +288,29 @@ def _mobilenet_v3_conf(
         bneck_conf(80, 3, 184, 80, False, "HS", 1, 1),
         bneck_conf(80, 3, 480, 112, True, "HS", 1, 1),
         bneck_conf(112, 3, 672, 112, True, "HS", 1, 1),
-        bneck_conf(112, 5, 672, 160 // reduce_divider, True, "HS", strides[3], dilation),  # C4
-        bneck_conf(160 // reduce_divider, 5, 960 // reduce_divider, 160 // reduce_divider, True, "HS", 1, dilation),
-        bneck_conf(160 // reduce_divider, 5, 960 // reduce_divider, 160 // reduce_divider, True, "HS", 1, dilation),
+        bneck_conf(
+            112, 5, 672, 160 // reduce_divider, True, "HS", strides[3], dilation
+        ),  # C4
+        bneck_conf(
+            160 // reduce_divider,
+            5,
+            960 // reduce_divider,
+            160 // reduce_divider,
+            True,
+            "HS",
+            1,
+            dilation,
+        ),
+        bneck_conf(
+            160 // reduce_divider,
+            5,
+            960 // reduce_divider,
+            160 // reduce_divider,
+            True,
+            "HS",
+            1,
+            dilation,
+        ),
     ]
     last_channel = adjust_channels(1280 // reduce_divider)
 
@@ -281,13 +327,17 @@ def _mobilenet_v3(
 
     if pretrained_name in pretrained_models:
         model_url = pretrained_models.get(pretrained_name)
-        state_dict = load_state_dict_from_url(model_url, model_dir=model_dir, map_location="cpu")
+        state_dict = load_state_dict_from_url(
+            model_url, model_dir=model_dir, map_location="cpu"
+        )
         if kwargs["head_type"] == "mlp":
             num_classes = state_dict["classifier.5.bias"].size(0)
         elif kwargs["head_type"] == "fully_convolutional":
             num_classes = state_dict["classifier.1.bias"].size(0)
         else:
-            print("Loading weights for classifier only implemented for head types 'mlp' and 'fully_convolutional'")
+            print(
+                "Loading weights for classifier only implemented for head types 'mlp' and 'fully_convolutional'"
+            )
             num_classes = -1
         if kwargs["num_classes"] != num_classes:
             # if the number of logits is not matching the state dict,
@@ -306,7 +356,11 @@ def _mobilenet_v3(
                 del state_dict["classifier.5.weight"]
                 del state_dict["classifier.5.bias"]
             else:
-                state_dict = {k: v for k, v in state_dict.items() if not k.startswith("classifier")}
+                state_dict = {
+                    k: v
+                    for k, v in state_dict.items()
+                    if not k.startswith("classifier")
+                }
         try:
             model.load_state_dict(state_dict)
         except RuntimeError as e:
@@ -324,7 +378,9 @@ def mobilenet_v3(pretrained_name: str = None, **kwargs: Any) -> MN:
     "Searching for MobileNetV3" <https://arxiv.org/abs/1905.02244>".
     """
     inverted_residual_setting, last_channel = _mobilenet_v3_conf(**kwargs)
-    return _mobilenet_v3(inverted_residual_setting, last_channel, pretrained_name, **kwargs)
+    return _mobilenet_v3(
+        inverted_residual_setting, last_channel, pretrained_name, **kwargs
+    )
 
 
 def get_model(
@@ -366,7 +422,11 @@ def get_model(
     """
 
     dim_map = {"c": 1, "f": 2, "t": 3}
-    assert len(se_dims) <= 3 and all([s in dim_map.keys() for s in se_dims]) or se_dims == "none"
+    assert (
+        len(se_dims) <= 3
+        and all([s in dim_map.keys() for s in se_dims])
+        or se_dims == "none"
+    )
     input_dims = (input_dim_f, input_dim_t)
     if se_dims == "none":
         se_dims = None

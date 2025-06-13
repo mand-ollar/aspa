@@ -14,7 +14,9 @@ class Equalizer(AudioAug):
     ) -> None:
         super().__init__(sr=sr, p=p)
 
-        self.eq: SevenBandParametricEQ = SevenBandParametricEQ(min_gain_db=min_gain_db, max_gain_db=max_gain_db, p=1.0)
+        self.eq: SevenBandParametricEQ = SevenBandParametricEQ(
+            min_gain_db=min_gain_db, max_gain_db=max_gain_db, p=1.0
+        )
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
         return torch.from_numpy(self.eq(samples=x.numpy(), sample_rate=self.sr))

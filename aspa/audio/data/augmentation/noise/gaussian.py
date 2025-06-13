@@ -5,13 +5,19 @@ from ..audio_augs import AudioAug
 
 
 class GaussianNoise(AudioAug):
-    def __init__(self, sr: int, p: float, min_snr_db: float = 5, max_snr_db: float = 40) -> None:
+    def __init__(
+        self, sr: int, p: float, min_snr_db: float = 5, max_snr_db: float = 40
+    ) -> None:
         super().__init__(sr=sr, p=p)
 
-        self.add_gaussian_snr: AddGaussianSNR = AddGaussianSNR(min_snr_db=min_snr_db, max_snr_db=max_snr_db, p=1.0)
+        self.add_gaussian_snr: AddGaussianSNR = AddGaussianSNR(
+            min_snr_db=min_snr_db, max_snr_db=max_snr_db, p=1.0
+        )
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.from_numpy(self.add_gaussian_snr(samples=x.numpy(), sample_rate=self.sr))
+        return torch.from_numpy(
+            self.add_gaussian_snr(samples=x.numpy(), sample_rate=self.sr)
+        )
 
     def __repr__(self) -> str:
         return (

@@ -67,4 +67,10 @@ class CollapseDim(nn.Module):
         self.combine_dim = combine_dim
 
     def forward(self, x):
-        return collapse_dim(x, dim=self.dim, mode=self.mode, pool_fn=self.pool_fn, combine_dim=self.combine_dim)
+        return collapse_dim(
+            x,
+            dim=self.dim,
+            mode=self.mode,
+            pool_fn=self.pool_fn,
+            combine_dim=self.combine_dim,
+        )

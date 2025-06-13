@@ -37,7 +37,13 @@ class RemoteMicrophone(BaseModel):
         )
 
     @staticmethod
-    def get_rtsp_url(ip: str, port: int, path: str, username: str | None = None, password: str | None = None) -> str:
+    def get_rtsp_url(
+        ip: str,
+        port: int,
+        path: str,
+        username: str | None = None,
+        password: str | None = None,
+    ) -> str:
         """Construct an RTSP URL from the given parameters."""
         url: str = f"rtsp://{ip}:{port}/{path}"
 

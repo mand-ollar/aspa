@@ -78,7 +78,9 @@ class DynamicConv(nn.Module):
         self.residuals = nn.Sequential(nn.Linear(context_dim, k * self.att_groups))
 
         # k sets of weights for convolution
-        weight = torch.randn(k, out_channels, in_channels // groups, kernel_size, kernel_size)
+        weight = torch.randn(
+            k, out_channels, in_channels // groups, kernel_size, kernel_size
+        )
 
         if bias:
             self.bias = nn.Parameter(torch.zeros(k, out_channels), requires_grad=True)
@@ -87,7 +89,15 @@ class DynamicConv(nn.Module):
 
         self._initialize_weights(weight, self.bias)
 
-        weight = weight.view(1, k, att_groups, out_channels, in_channels // groups, kernel_size, kernel_size)
+        weight = weight.view(
+            1,
+            k,
+            att_groups,
+            out_channels,
+            in_channels // groups,
+            kernel_size,
+            kernel_size,
+        )
 
         weight = weight.transpose(1, 2).view(1, self.att_groups, self.k, -1)
         self.weight = nn.Parameter(weight, requires_grad=True)
@@ -110,12 +120,21 @@ class DynamicConv(nn.Module):
         aggregate_weight = (
             (attention @ self.weight)
             .transpose(1, 2)
-            .reshape(b, self.out_channels, self.in_channels // self.groups, self.kernel_size, self.kernel_size)
+            .reshape(
+                b,
+                self.out_channels,
+                self.in_channels // self.groups,
+                self.kernel_size,
+                self.kernel_size,
+            )
         )
 
         # aggregate_weight shape: batch_size x out_channels x in_channels // groups x kernel_size x kernel_size
         aggregate_weight = aggregate_weight.view(
-            b * self.out_channels, self.in_channels // self.groups, self.kernel_size, self.kernel_size
+            b * self.out_channels,
+            self.in_channels // self.groups,
+            self.kernel_size,
+            self.kernel_size,
         )
         # each sample in the batch has different weights for the convolution - therefore batch and channel dims need to
         # be merged together in channel dimension
@@ -150,7 +169,9 @@ class DynamicConv(nn.Module):
         # temperature schedule for attention weights
         # see Equation 5: tau = temperature
         t0 = self.T_max - self.T0_slope * epoch
-        t1 = 1 + self.T1_slope * (self.T_max - 1) / self.T0_slope - self.T1_slope * epoch
+        t1 = (
+            1 + self.T1_slope * (self.T_max - 1) / self.T0_slope - self.T1_slope * epoch
+        )
         self.temperature = max(t0, t1, self.T_min)
         print(f"Setting temperature for attention over kernels to {self.temperature}")
 
@@ -166,7 +187,9 @@ class DyReLU(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
         self.register_buffer("lambdas", torch.Tensor([1.0] * M + [0.5] * M).float())
-        self.register_buffer("init_v", torch.Tensor([1.0] + [0.0] * (2 * M - 1)).float())
+        self.register_buffer(
+            "init_v", torch.Tensor([1.0] + [0.0] * (2 * M - 1)).float()
+        )
 
     def get_relu_coefs(self, x):
         theta = self.coef_net(x)
@@ -190,10 +213,15 @@ class DyReLUB(DyReLU):
         h_c = g[0].view(b, -1)
         theta = self.get_relu_coefs(h_c)
 
-        relu_coefs = theta.view(-1, self.channels, 1, 1, 2 * self.M) * self.lambdas + self.init_v
+        relu_coefs = (
+            theta.view(-1, self.channels, 1, 1, 2 * self.M) * self.lambdas + self.init_v
+        )
         # relu_coefs shape: batch_size x channels x 1 x 1 x 2*M
         # x shape: batch_size x channels x f_bands x time_frames
-        x_mapped = x.unsqueeze(-1) * relu_coefs[:, :, :, :, : self.M] + relu_coefs[:, :, :, :, self.M :]
+        x_mapped = (
+            x.unsqueeze(-1) * relu_coefs[:, :, :, :, : self.M]
+            + relu_coefs[:, :, :, :, self.M :]
+        )
         if self.M == 2:
             # torch.maximum turned out to be faster than torch.max for M=2
             result = torch.maximum(x_mapped[:, :, :, :, 0], x_mapped[:, :, :, :, 1])
@@ -230,18 +258,28 @@ class ContextGen(nn.Module):
         super(ContextGen, self).__init__()
 
         # shared linear layer implemented as a 2D convolution with 1x1 kernel
-        self.joint_conv = nn.Conv2d(in_ch, context_dim, kernel_size=(1, 1), stride=(1, 1), padding=0, bias=False)
+        self.joint_conv = nn.Conv2d(
+            in_ch, context_dim, kernel_size=(1, 1), stride=(1, 1), padding=0, bias=False
+        )
         self.joint_norm = norm_layer(context_dim)
         self.joint_act = nn.Hardswish(inplace=True)
 
         # separate linear layers for Coordinate Attention
-        self.conv_f = nn.Conv2d(context_dim, exp_ch, kernel_size=(1, 1), stride=(1, 1), padding=0)
-        self.conv_t = nn.Conv2d(context_dim, exp_ch, kernel_size=(1, 1), stride=(1, 1), padding=0)
+        self.conv_f = nn.Conv2d(
+            context_dim, exp_ch, kernel_size=(1, 1), stride=(1, 1), padding=0
+        )
+        self.conv_t = nn.Conv2d(
+            context_dim, exp_ch, kernel_size=(1, 1), stride=(1, 1), padding=0
+        )
 
         if stride > 1:
             # sequence pooling for Coordinate Attention
-            self.pool_f = nn.AvgPool2d(kernel_size=(3, 1), stride=(stride, 1), padding=(1, 0))
-            self.pool_t = nn.AvgPool2d(kernel_size=(1, 3), stride=(1, stride), padding=(0, 1))
+            self.pool_f = nn.AvgPool2d(
+                kernel_size=(3, 1), stride=(stride, 1), padding=(1, 0)
+            )
+            self.pool_t = nn.AvgPool2d(
+                kernel_size=(1, 3), stride=(1, stride), padding=(0, 1)
+            )
         else:
             self.pool_f = nn.Sequential()
             self.pool_t = nn.Sequential()
@@ -287,7 +325,9 @@ class DY_Block(nn.Module):
         if not (1 <= cnf.stride <= 2):
             raise ValueError("illegal stride value")
 
-        self.use_res_connect = cnf.stride == 1 and cnf.input_channels == cnf.out_channels
+        self.use_res_connect = (
+            cnf.stride == 1 and cnf.input_channels == cnf.out_channels
+        )
         # context_dim is denoted as 'H' in the paper
         self.context_dim = np.clip(
             make_divisible(cnf.expanded_channels // context_ratio, 8),
@@ -403,7 +443,11 @@ class DY_Block(nn.Module):
 
         context_norm_layer = norm_layer
         self.context_gen = ContextGen(
-            self.context_dim, cnf.input_channels, cnf.expanded_channels, norm_layer=context_norm_layer, stride=stride
+            self.context_dim,
+            cnf.input_channels,
+            cnf.expanded_channels,
+            norm_layer=context_norm_layer,
+            stride=stride,
         )
 
     def forward(self, x, g=None):

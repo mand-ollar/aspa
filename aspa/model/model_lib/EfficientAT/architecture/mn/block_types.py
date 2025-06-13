@@ -26,7 +26,9 @@ class ConcurrentSEBlock(torch.nn.Module):
         elif se_cnf["se_agg"] == "min":
             self.agg_op = lambda x: torch.min(x, dim=0)[0]
         else:
-            raise NotImplementedError(f"SE aggregation operation '{self.agg_op}' not implemented")
+            raise NotImplementedError(
+                f"SE aggregation operation '{self.agg_op}' not implemented"
+            )
 
     def forward(self, input: Tensor) -> Tensor:
         # apply all concurrent se layers
@@ -124,7 +126,9 @@ class InvertedResidual(nn.Module):
         if not (1 <= cnf.stride <= 2):
             raise ValueError("illegal stride value")
 
-        self.use_res_connect = cnf.stride == 1 and cnf.input_channels == cnf.out_channels
+        self.use_res_connect = (
+            cnf.stride == 1 and cnf.input_channels == cnf.out_channels
+        )
 
         layers: List[nn.Module] = []
         activation_layer = nn.Hardswish if cnf.use_hs else nn.ReLU
@@ -156,12 +160,18 @@ class InvertedResidual(nn.Module):
             )
         )
         if cnf.use_se and se_cnf["se_dims"] is not None:
-            layers.append(ConcurrentSEBlock(cnf.expanded_channels, cnf.f_dim, cnf.t_dim, se_cnf))
+            layers.append(
+                ConcurrentSEBlock(cnf.expanded_channels, cnf.f_dim, cnf.t_dim, se_cnf)
+            )
 
         # project
         layers.append(
             ConvNormActivation(
-                cnf.expanded_channels, cnf.out_channels, kernel_size=1, norm_layer=norm_layer, activation_layer=None
+                cnf.expanded_channels,
+                cnf.out_channels,
+                kernel_size=1,
+                norm_layer=norm_layer,
+                activation_layer=None,
             )
         )
 

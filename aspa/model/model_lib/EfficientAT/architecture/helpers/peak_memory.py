@@ -43,10 +43,14 @@ def peak_memory_mnv3(model, spec_size, bits_per_elem=16):
         block_in_t = input[0].size(3)
         block_in_f = input[0].size(2)
         stride = self.block[1][0].stride[0]
-        mem += block_in_t * block_in_f * self.block[0].out_channels / slice  # repr. before depth-wise
+        mem += (
+            block_in_t * block_in_f * self.block[0].out_channels / slice
+        )  # repr. before depth-wise
         next_in_f = block_in_f // stride
         next_in_t = block_in_t // stride
-        mem += next_in_t * next_in_f * self.block[0].out_channels / slice  # repr. after depth-wise
+        mem += (
+            next_in_t * next_in_f * self.block[0].out_channels / slice
+        )  # repr. after depth-wise
         inv_residual_elems.append(mem)
 
     def foo(net):
@@ -148,7 +152,9 @@ def peak_memory_cnn(model, spec_size, bits_per_elem=16):
     with torch.no_grad():
         model(input)
 
-    conv_act_mems = [elem * bits_per_elem / (8 * 1000) for elem in conv_activation_elems]
+    conv_act_mems = [
+        elem * bits_per_elem / (8 * 1000) for elem in conv_activation_elems
+    ]
     peak_mem = max(conv_act_mems)
 
     print("*************Memory Complexity (kB) **************")

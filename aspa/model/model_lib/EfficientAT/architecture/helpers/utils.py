@@ -78,7 +78,12 @@ def linear_rampdown(rampdown_length, start=0, last_value=0):
         if epoch <= start:
             return 1.0
         elif epoch - start < rampdown_length:
-            return last_value + (1.0 - last_value) * (rampdown_length - epoch + start) / rampdown_length
+            return (
+                last_value
+                + (1.0 - last_value)
+                * (rampdown_length - epoch + start)
+                / rampdown_length
+            )
         else:
             return last_value
 
@@ -111,11 +116,15 @@ def mixstyle(x, p=0.4, alpha=0.4, eps=1e-6, mix_labels=False):
     f_sig = (f_var + eps).sqrt()  # compute instance standard deviation
     f_mu, f_sig = f_mu.detach(), f_sig.detach()  # block gradients
     x_normed = (x - f_mu) / f_sig  # normalize input
-    lmda = Beta(alpha, alpha).sample((batch_size, 1, 1, 1)).to(x.device)  # sample instance-wise convex weights
+    lmda = (
+        Beta(alpha, alpha).sample((batch_size, 1, 1, 1)).to(x.device)
+    )  # sample instance-wise convex weights
     perm = torch.randperm(batch_size).to(x.device)  # generate shuffling indices
     f_mu_perm, f_sig_perm = f_mu[perm], f_sig[perm]  # shuffling
     mu_mix = f_mu * lmda + f_mu_perm * (1 - lmda)  # generate mixed mean
-    sig_mix = f_sig * lmda + f_sig_perm * (1 - lmda)  # generate mixed standard deviation
+    sig_mix = f_sig * lmda + f_sig_perm * (
+        1 - lmda
+    )  # generate mixed standard deviation
     x = x_normed * sig_mix + mu_mix  # denormalize input using the mixed statistics
     if mix_labels:
         return x, perm, lmda

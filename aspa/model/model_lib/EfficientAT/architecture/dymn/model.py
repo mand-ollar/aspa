@@ -62,14 +62,25 @@ class DyMN(nn.Module):
             raise ValueError("The inverted_residual_setting should not be empty")
         elif not (
             isinstance(inverted_residual_setting, Sequence)
-            and all([isinstance(s, DynamicInvertedResidualConfig) for s in inverted_residual_setting])
+            and all(
+                [
+                    isinstance(s, DynamicInvertedResidualConfig)
+                    for s in inverted_residual_setting
+                ]
+            )
         ):
-            raise TypeError("The inverted_residual_setting should be List[DynamicInvertedResidualConfig]")
+            raise TypeError(
+                "The inverted_residual_setting should be List[DynamicInvertedResidualConfig]"
+            )
 
         if block is None:
             block = DY_Block
 
-        norm_layer = norm_layer if norm_layer is not None else partial(nn.BatchNorm2d, eps=0.001, momentum=0.01)
+        norm_layer = (
+            norm_layer
+            if norm_layer is not None
+            else partial(nn.BatchNorm2d, eps=0.001, momentum=0.01)
+        )
 
         self.layers = nn.ModuleList()
 
@@ -99,7 +110,12 @@ class DyMN(nn.Module):
                     temp_schedule=temp_schedule,
                 )
             else:
-                b = InvertedResidual(cnf, None, norm_layer, partial(nn.BatchNorm2d, eps=0.001, momentum=0.01))
+                b = InvertedResidual(
+                    cnf,
+                    None,
+                    norm_layer,
+                    partial(nn.BatchNorm2d, eps=0.001, momentum=0.01),
+                )
 
             self.layers.append(b)
 
@@ -118,7 +134,12 @@ class DyMN(nn.Module):
         if self.head_type == "fully_convolutional":
             self.classifier = nn.Sequential(
                 nn.Conv2d(
-                    lastconv_output_channels, num_classes, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0), bias=False
+                    lastconv_output_channels,
+                    num_classes,
+                    kernel_size=(1, 1),
+                    stride=(1, 1),
+                    padding=(0, 0),
+                    bias=False,
                 ),
                 nn.BatchNorm2d(num_classes),
                 nn.AdaptiveAvgPool2d((1, 1)),
@@ -142,7 +163,9 @@ class DyMN(nn.Module):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out")
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm, nn.LayerNorm, nn.InstanceNorm2d)):
+            elif isinstance(
+                m, (nn.BatchNorm2d, nn.GroupNorm, nn.LayerNorm, nn.InstanceNorm2d)
+            ):
                 nn.init.ones_(m.weight)
                 nn.init.zeros_(m.bias)
             elif isinstance(m, nn.Linear):
@@ -192,17 +215,53 @@ def _dymn_conf(
     dilation = 2 if dilated else 1
 
     bneck_conf = partial(DynamicInvertedResidualConfig, width_mult=width_mult)
-    adjust_channels = partial(DynamicInvertedResidualConfig.adjust_channels, width_mult=width_mult)
+    adjust_channels = partial(
+        DynamicInvertedResidualConfig.adjust_channels, width_mult=width_mult
+    )
 
-    activations = ["RE", "RE", "RE", "RE", "RE", "RE", "HS", "HS", "HS", "HS", "HS", "HS", "HS", "HS", "HS"]
+    activations = [
+        "RE",
+        "RE",
+        "RE",
+        "RE",
+        "RE",
+        "RE",
+        "HS",
+        "HS",
+        "HS",
+        "HS",
+        "HS",
+        "HS",
+        "HS",
+        "HS",
+        "HS",
+    ]
 
     if use_dy_blocks == "all":
         # per default the dynamic blocks replace all conventional IR blocks
         use_dy_block = [True] * 15
     elif use_dy_blocks == "replace_se":
-        use_dy_block = [False, False, False, True, True, True, False, False, False, False, True, True, True, True, True]
+        use_dy_block = [
+            False,
+            False,
+            False,
+            True,
+            True,
+            True,
+            False,
+            False,
+            False,
+            False,
+            True,
+            True,
+            True,
+            True,
+            True,
+        ]
     else:
-        raise NotImplementedError(f"Config use_dy_blocks={use_dy_blocks} not implemented.")
+        raise NotImplementedError(
+            f"Config use_dy_blocks={use_dy_blocks} not implemented."
+        )
 
     inverted_residual_setting = [
         bneck_conf(16, 3, 16, 16, use_dy_block[0], activations[0], 1, 1),
@@ -211,13 +270,24 @@ def _dymn_conf(
         bneck_conf(24, 5, 72, 40, use_dy_block[3], activations[3], strides[1], 1),  # C2
         bneck_conf(40, 5, 120, 40, use_dy_block[4], activations[4], 1, 1),
         bneck_conf(40, 5, 120, 40, use_dy_block[5], activations[5], 1, 1),
-        bneck_conf(40, 3, 240, 80, use_dy_block[6], activations[6], strides[2], 1),  # C3
+        bneck_conf(
+            40, 3, 240, 80, use_dy_block[6], activations[6], strides[2], 1
+        ),  # C3
         bneck_conf(80, 3, 200, 80, use_dy_block[7], activations[7], 1, 1),
         bneck_conf(80, 3, 184, 80, use_dy_block[8], activations[8], 1, 1),
         bneck_conf(80, 3, 184, 80, use_dy_block[9], activations[9], 1, 1),
         bneck_conf(80, 3, 480, 112, use_dy_block[10], activations[10], 1, 1),
         bneck_conf(112, 3, 672, 112, use_dy_block[11], activations[11], 1, 1),
-        bneck_conf(112, 5, 672, 160 // reduce_divider, use_dy_block[12], activations[12], strides[3], dilation),  # C4
+        bneck_conf(
+            112,
+            5,
+            672,
+            160 // reduce_divider,
+            use_dy_block[12],
+            activations[12],
+            strides[3],
+            dilation,
+        ),  # C4
         bneck_conf(
             160 // reduce_divider,
             5,
@@ -256,7 +326,9 @@ def _dymn(
     if pretrained_name:
         # download from GitHub or load cached state_dict from 'resources' folder
         model_url = pretrained_models.get(pretrained_name)
-        state_dict = load_state_dict_from_url(model_url, model_dir=model_dir, map_location="cpu")
+        state_dict = load_state_dict_from_url(
+            model_url, model_dir=model_dir, map_location="cpu"
+        )
         cls_in_state_dict = state_dict["classifier.5.weight"].shape[0]
         cls_in_current_model = model.classifier[5].out_features
         if cls_in_state_dict != cls_in_current_model:

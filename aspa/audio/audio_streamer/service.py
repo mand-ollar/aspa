@@ -15,7 +15,12 @@ from .microphones import LocalMicrophone, RemoteMicrophone
 
 
 class MicrophoneService(ABC):
-    def __init__(self, mic: LocalMicrophone | RemoteMicrophone, chunk_sec: float = 0.05, sr: int = 48000) -> None:
+    def __init__(
+        self,
+        mic: LocalMicrophone | RemoteMicrophone,
+        chunk_sec: float = 0.05,
+        sr: int = 48000,
+    ) -> None:
         self.mic: LocalMicrophone | RemoteMicrophone = mic
         self.chunk_sec: float = chunk_sec
         self.sr: int = sr
@@ -27,7 +32,13 @@ class MicrophoneService(ABC):
 
 
 class LocalMicrophoneService(MicrophoneService):
-    def __init__(self, mic: LocalMicrophone, chunk_sec: float = 0.05, sr: int = 48000, channel_index: int = 1) -> None:
+    def __init__(
+        self,
+        mic: LocalMicrophone,
+        chunk_sec: float = 0.05,
+        sr: int = 48000,
+        channel_index: int = 1,
+    ) -> None:
         super().__init__(mic=mic, chunk_sec=chunk_sec, sr=sr)
 
         if mic.maxInputChannels < 1:
@@ -41,8 +52,12 @@ class LocalMicrophoneService(MicrophoneService):
     def listen(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
         return self._listen_local_microphone(listen_event=listen_event)
 
-    def _listen_local_microphone(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
-        assert isinstance(self.mic, LocalMicrophone), "The microphone must be a LocalMicrophone instance."
+    def _listen_local_microphone(
+        self, listen_event: threading.Event
+    ) -> Iterator[np.ndarray]:
+        assert isinstance(self.mic, LocalMicrophone), (
+            "The microphone must be a LocalMicrophone instance."
+        )
 
         p: pyaudio.PyAudio = pyaudio.PyAudio()
         stream: pyaudio.Stream = p.open(
@@ -68,7 +83,9 @@ class LocalMicrophoneService(MicrophoneService):
 
 
 class RemoteMicrophoneService(MicrophoneService):
-    def __init__(self, mic: RemoteMicrophone, chunk_sec: float = 0.05, sr: int = 48000) -> None:
+    def __init__(
+        self, mic: RemoteMicrophone, chunk_sec: float = 0.05, sr: int = 48000
+    ) -> None:
         super().__init__(mic=mic, chunk_sec=chunk_sec, sr=sr)
 
         self.proc: subprocess.Popen | None = None
@@ -77,8 +94,12 @@ class RemoteMicrophoneService(MicrophoneService):
     def listen(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
         return self._listen_remote_microphone(listen_event=listen_event)
 
-    def _listen_remote_microphone(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
-        assert isinstance(self.mic, RemoteMicrophone), "The microphone must be a RemoteMicrophone instance."
+    def _listen_remote_microphone(
+        self, listen_event: threading.Event
+    ) -> Iterator[np.ndarray]:
+        assert isinstance(self.mic, RemoteMicrophone), (
+            "The microphone must be a RemoteMicrophone instance."
+        )
 
         command: list[str] = [
             "ffmpeg",
@@ -106,12 +127,20 @@ class RemoteMicrophoneService(MicrophoneService):
             assert self.proc.stdout is not None, "Process stdout is None."
 
             yield np.frombuffer(
-                self.proc.stdout.read(np.dtype(np.float32).itemsize * int(self.chunk_sec * self.sr)), dtype=np.float32
+                self.proc.stdout.read(
+                    np.dtype(np.float32).itemsize * int(self.chunk_sec * self.sr)
+                ),
+                dtype=np.float32,
             )
 
 
 class RecordService:
-    def __init__(self, filepath: Path, mic_service: MicrophoneService, record_event: threading.Event) -> None:
+    def __init__(
+        self,
+        filepath: Path,
+        mic_service: MicrophoneService,
+        record_event: threading.Event,
+    ) -> None:
         self.filepath: Path = filepath
         self.mic_service: MicrophoneService = mic_service
         self.sr: int = mic_service.sr
@@ -143,7 +172,9 @@ class RecordService:
         self.tmp_filepath.unlink()
 
     def __call__(self) -> None:
-        tmp_filename = "".join(np.random.choice(list(string.ascii_letters + string.digits), 10))
+        tmp_filename = "".join(
+            np.random.choice(list(string.ascii_letters + string.digits), 10)
+        )
 
         self.filepath = Path(self.filepath)
         self.tmp_filepath = Path(f"/tmp/{tmp_filename}.tmp")

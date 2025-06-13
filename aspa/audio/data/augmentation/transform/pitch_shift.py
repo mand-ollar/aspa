@@ -13,7 +13,9 @@ class PitchShift(AudioAug):
         p: float,
         min_semitones: float = -4.0,
         max_semitones: float = 4.0,
-        method: Literal["librosa_phase_vocoder", "signalsmith_stretch"] = "signalsmith_stretch",
+        method: Literal[
+            "librosa_phase_vocoder", "signalsmith_stretch"
+        ] = "signalsmith_stretch",
     ) -> None:
         super().__init__(sr=sr, p=p)
 
@@ -28,7 +30,9 @@ class PitchShift(AudioAug):
         )
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.from_numpy(self.pitch_shift(samples=x.numpy(), sample_rate=self.sr))
+        return torch.from_numpy(
+            self.pitch_shift(samples=x.numpy(), sample_rate=self.sr)
+        )
 
     def __repr__(self) -> str:
         return (

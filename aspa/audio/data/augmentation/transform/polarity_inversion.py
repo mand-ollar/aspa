@@ -13,7 +13,9 @@ class PolarityInversion(AudioAug):
         self.polarity_inversion: _PolarityInversion = _PolarityInversion(p=1.0)
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.from_numpy(self.polarity_inversion(samples=x.numpy(), sample_rate=self.sr))
+        return torch.from_numpy(
+            self.polarity_inversion(samples=x.numpy(), sample_rate=self.sr)
+        )
 
     def __repr__(self) -> str:
         return f"PolarityInversion(sr={self.sr}, p={self.p})"

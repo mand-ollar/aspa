@@ -30,7 +30,9 @@ class MultiHeadAttentionPooling(nn.Module):
 
         # out size: out dim x 2 (att and clf paths) x num_heads
         self.subspace_proj = nn.Linear(self.in_dim, self.out_dim * 2 * self.num_heads)
-        self.head_weight = nn.Parameter(torch.tensor([1.0 / self.num_heads] * self.num_heads).view(1, -1, 1))
+        self.head_weight = nn.Parameter(
+            torch.tensor([1.0 / self.num_heads] * self.num_heads).view(1, -1, 1)
+        )
 
     def activate(self, x, activation):
         if activation == "linear":
@@ -46,11 +48,19 @@ class MultiHeadAttentionPooling(nn.Module):
 
     def forward(self, x) -> Tensor:
         """x: Tensor of size (batch_size, channels, frequency bands, sequence length)"""
-        x = collapse_dim(x, dim=2)  # results in tensor of size (batch_size, channels, sequence_length)
-        x = x.transpose(1, 2)  # results in tensor of size (batch_size, sequence_length, channels)
+        x = collapse_dim(
+            x, dim=2
+        )  # results in tensor of size (batch_size, channels, sequence_length)
+        x = x.transpose(
+            1, 2
+        )  # results in tensor of size (batch_size, sequence_length, channels)
         b, n, c = x.shape
 
-        x = self.subspace_proj(x).reshape(b, n, 2, self.num_heads, self.out_dim).permute(2, 0, 3, 1, 4)
+        x = (
+            self.subspace_proj(x)
+            .reshape(b, n, 2, self.num_heads, self.out_dim)
+            .permute(2, 0, 3, 1, 4)
+        )
         att, val = x[0], x[1]
         val = self.activate(val, self.clf_activation)
         att = self.activate(att, self.att_activation)

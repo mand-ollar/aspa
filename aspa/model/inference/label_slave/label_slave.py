@@ -19,7 +19,9 @@ class LabelSlave:
         self.dataset: LabelSlaveDataset
         self.model: list[ModelWrapper] = []
 
-        assert isinstance(self.config.ckpt_path, list), "ckpt_path must be a list of paths."
+        assert isinstance(self.config.ckpt_path, list), (
+            "ckpt_path must be a list of paths."
+        )
         self._set_model(ckpt_paths=self.config.ckpt_path)
 
     @property
@@ -30,7 +32,9 @@ class LabelSlave:
         self.model = []
 
         for ckpt_path in ckpt_paths:
-            model: EfficientAT = EfficientAT(ckpt_path=ckpt_path, gpu_id=self.config.gpu_id)
+            model: EfficientAT = EfficientAT(
+                ckpt_path=ckpt_path, gpu_id=self.config.gpu_id
+            )
             assert model.classes is not None, "Model classes are not set."
             self.classes: list[str] = model.classes
 
@@ -38,7 +42,9 @@ class LabelSlave:
             self.config.sr = model.sr
             self.model.append(model)
 
-    def _get_model_results(self, x: torch.Tensor, mode: Literal["logit", "confidence"]) -> torch.Tensor:
+    def _get_model_results(
+        self, x: torch.Tensor, mode: Literal["logit", "confidence"]
+    ) -> torch.Tensor:
         results: list[torch.Tensor] = []
 
         for model in self.model:
@@ -47,16 +53,23 @@ class LabelSlave:
             elif mode == "confidence":
                 results.append(model.confidences(x=x))
             else:
-                raise ValueError(f"Invalid mode: {mode}. Choose either 'logit' or 'confidence'.")
+                raise ValueError(
+                    f"Invalid mode: {mode}. Choose either 'logit' or 'confidence'."
+                )
 
         result: torch.Tensor = torch.mean(torch.stack(results), dim=0)
 
         return result
 
     def _set_dataset(
-        self, wav_path: str | Path | None = None, audio: torch.Tensor | None = None, audio_sr: int | None = None
+        self,
+        wav_path: str | Path | None = None,
+        audio: torch.Tensor | None = None,
+        audio_sr: int | None = None,
     ) -> None:
-        assert wav_path is not None or audio is not None, "Either wav_path or audio must be provided."
+        assert wav_path is not None or audio is not None, (
+            "Either wav_path or audio must be provided."
+        )
 
         self.dataset = LabelSlaveDataset(
             wav_path=wav_path,
@@ -66,7 +79,9 @@ class LabelSlave:
             window_sec=self.config.window_sec,
             hop_sec=self.config.hop_sec,
         )
-        assert len(self.dataset) > 0, "Dataset is empty. Check the wav file path and parameters."
+        assert len(self.dataset) > 0, (
+            "Dataset is empty. Check the wav file path and parameters."
+        )
 
     def _create_labels(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Returns a tuple of (confidence, tensor[window_st, window_en])."""
@@ -78,8 +93,12 @@ class LabelSlave:
         )
         confidence_list: list[torch.Tensor] = []
         window_list: list[torch.Tensor] = []
-        for audio, window in tqdm(dataloader, ncols=80, desc="Creating labels", leave=False):
-            confidence: torch.Tensor = self._get_model_results(x=audio, mode="confidence")
+        for audio, window in tqdm(
+            dataloader, ncols=80, desc="Creating labels", leave=False
+        ):
+            confidence: torch.Tensor = self._get_model_results(
+                x=audio, mode="confidence"
+            )
             confidence_list.append(confidence)
             window_list.append(window)
 
@@ -98,8 +117,12 @@ class LabelSlave:
         elif self.model[0].task == "classification":
             predictions = (confidence == confidence.max(dim=-1).values).int()
         else:
-            raise ValueError(f"Invalid task type: {self.model[0].task}. Choose either 'tagging' or 'classification'.")
-        labels_list: list[str] = [self.classes[i] for i in torch.where(predictions == 1)[0]]
+            raise ValueError(
+                f"Invalid task type: {self.model[0].task}. Choose either 'tagging' or 'classification'."
+            )
+        labels_list: list[str] = [
+            self.classes[i] for i in torch.where(predictions == 1)[0]
+        ]
 
         return labels_list
 
@@ -110,7 +133,9 @@ class LabelSlave:
         for confidence, window in zip(confidences, windows):
             st_pnt: int = int(window[0].item())
             en_pnt: int = int(window[1].item())
-            str_labels: list[str] = self._get_label_names_from_confidence(confidence=confidence)
+            str_labels: list[str] = self._get_label_names_from_confidence(
+                confidence=confidence
+            )
 
             for str_label in str_labels:
                 label_str_list.append(f"{st_pnt}\t{en_pnt}\t{str_label}")
@@ -204,13 +229,19 @@ class LabelSlave:
         as_txt: bool = False,
         print_result: bool = False,
     ) -> None:
-        self._print(f"Slave {Colors.BOLD}{Colors.RED}{self.name}{Colors.END} is working!")
+        self._print(
+            f"Slave {Colors.BOLD}{Colors.RED}{self.name}{Colors.END} is working!"
+        )
 
-        assert wav_path is not None or audio is not None, "Either wav_path or audio must be provided."
+        assert wav_path is not None or audio is not None, (
+            "Either wav_path or audio must be provided."
+        )
 
         self._set_dataset(wav_path=wav_path, audio=audio, audio_sr=audio_sr)
         result: str = LabelSlave._sort_labels(
-            label=LabelSlave._merge_labels(label=self._stringify_labels(label=self._create_labels()))
+            label=LabelSlave._merge_labels(
+                label=self._stringify_labels(label=self._create_labels())
+            )
         )
 
         save_path: Path | None
@@ -219,11 +250,17 @@ class LabelSlave:
 
         elif wav_path is None and label_save_path is not None:
             if Path(label_save_path).suffix == "":
-                self._print(f"Appending suffix {'.txt' if as_txt else '.tsv'} to {label_save_path}")
+                self._print(
+                    f"Appending suffix {'.txt' if as_txt else '.tsv'} to {label_save_path}"
+                )
             elif as_txt and Path(label_save_path).suffix != ".txt":
-                self._print(f"Changing suffix from {Path(label_save_path).suffix} to .txt")
+                self._print(
+                    f"Changing suffix from {Path(label_save_path).suffix} to .txt"
+                )
             elif not as_txt and Path(label_save_path).suffix != ".tsv":
-                self._print(f"Changing suffix from {Path(label_save_path).suffix} to .tsv")
+                self._print(
+                    f"Changing suffix from {Path(label_save_path).suffix} to .tsv"
+                )
             save_path = Path(label_save_path).with_suffix(".txt" if as_txt else ".tsv")
 
         else:
@@ -238,7 +275,9 @@ class LabelSlave:
                 with open(file=save_path, mode="w") as f:
                     f.write(result)
             self._print(f"Label file saved to {save_path}")
-            self._print("No save path provided. Labels will be printed but not be saved.")
+            self._print(
+                "No save path provided. Labels will be printed but not be saved."
+            )
 
         if save_path is None or print_result:
             print("Model inference result:")

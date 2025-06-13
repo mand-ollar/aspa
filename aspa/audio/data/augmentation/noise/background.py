@@ -20,7 +20,9 @@ class BackgroundNoise(AudioAug):
         noise_rms: Literal["relative", "absolute"] = "relative",
         min_absolute_rms_db: float = -45,
         max_absolute_rms_db: float = -15,
-        noise_transform: Optional[Callable[[NDArray[np.float32], int], NDArray[np.float32]]] = None,
+        noise_transform: Optional[
+            Callable[[NDArray[np.float32], int], NDArray[np.float32]]
+        ] = None,
         lru_cache_size: int = 2,
     ) -> None:
         super().__init__(sr=sr, p=p)
@@ -38,7 +40,9 @@ class BackgroundNoise(AudioAug):
         )
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.from_numpy(self.add_background_noise(samples=x.numpy(), sample_rate=self.sr))
+        return torch.from_numpy(
+            self.add_background_noise(samples=x.numpy(), sample_rate=self.sr)
+        )
 
     def __repr__(self) -> str:
         return (

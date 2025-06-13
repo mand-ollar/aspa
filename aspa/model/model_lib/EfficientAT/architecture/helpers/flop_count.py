@@ -12,7 +12,9 @@ def count_macs(model, spec_size):
         assert batch_size == 1
         output_channels, output_height, output_width = output[0].size()
 
-        kernel_ops = self.kernel_size[0] * self.kernel_size[1] * (self.in_channels / self.groups)
+        kernel_ops = (
+            self.kernel_size[0] * self.kernel_size[1] * (self.in_channels / self.groups)
+        )
         bias_ops = 1 if self.bias is not None else 0
 
         params = output_channels * (kernel_ops + bias_ops)
@@ -62,9 +64,19 @@ def count_macs(model, spec_size):
     print("*************Computational Complexity (multiply-adds) **************")
     print("Number of Convolutional Layers: ", len(list_conv2d))
     print("Number of Linear Layers: ", len(list_linear))
-    print("Relative Share of Convolutional Layers: {:.2f}".format((sum(list_conv2d) / total_macs)))
-    print("Relative Share of Linear Layers: {:.2f}".format(sum(list_linear) / total_macs))
-    print("Total MACs (multiply-accumulate operations in Billions): {:.2f}".format(total_macs / 10**9))
+    print(
+        "Relative Share of Convolutional Layers: {:.2f}".format(
+            (sum(list_conv2d) / total_macs)
+        )
+    )
+    print(
+        "Relative Share of Linear Layers: {:.2f}".format(sum(list_linear) / total_macs)
+    )
+    print(
+        "Total MACs (multiply-accumulate operations in Billions): {:.2f}".format(
+            total_macs / 10**9
+        )
+    )
     print("********************************************************************")
     return total_macs
 
@@ -78,7 +90,9 @@ def count_macs_transformer(model, spec_size):
         assert batch_size == 1
         output_channels, output_height, output_width = output[0].size()
 
-        kernel_ops = self.kernel_size[0] * self.kernel_size[1] * (self.in_channels / self.groups)
+        kernel_ops = (
+            self.kernel_size[0] * self.kernel_size[1] * (self.in_channels / self.groups)
+        )
         bias_ops = 1 if self.bias is not None else 0
 
         params = output_channels * (kernel_ops + bias_ops)
@@ -153,9 +167,21 @@ def count_macs_transformer(model, spec_size):
     print("Number of Convolutional Layers: ", len(list_conv2d))
     print("Number of Linear Layers: ", len(list_linear))
     print("Number of Attention Layers: ", len(list_att))
-    print("Relative Share of Convolutional Layers: {:.2f}".format((sum(list_conv2d) / total_macs)))
-    print("Relative Share of Linear Layers: {:.2f}".format(sum(list_linear) / total_macs))
-    print("Relative Share of Attention Layers: {:.2f}".format(sum(list_att) / total_macs))
-    print("Total MACs (multiply-accumulate operations in Billions): {:.2f}".format(total_macs / 10**9))
+    print(
+        "Relative Share of Convolutional Layers: {:.2f}".format(
+            (sum(list_conv2d) / total_macs)
+        )
+    )
+    print(
+        "Relative Share of Linear Layers: {:.2f}".format(sum(list_linear) / total_macs)
+    )
+    print(
+        "Relative Share of Attention Layers: {:.2f}".format(sum(list_att) / total_macs)
+    )
+    print(
+        "Total MACs (multiply-accumulate operations in Billions): {:.2f}".format(
+            total_macs / 10**9
+        )
+    )
     print("********************************************************************")
     return total_macs

@@ -29,7 +29,9 @@ class ColorNoise(AudioAug):
         )
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.from_numpy(self.add_color_noise(samples=x.numpy(), sample_rate=self.sr))
+        return torch.from_numpy(
+            self.add_color_noise(samples=x.numpy(), sample_rate=self.sr)
+        )
 
     def __repr__(self) -> str:
         return (

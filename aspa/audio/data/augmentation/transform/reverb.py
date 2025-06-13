@@ -29,9 +29,15 @@ class Reverb(AudioAug):
         self.target_info: dict[str, int | float] = {"channels": 1, "rate": sr}
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        reverberance: float = torch.randint(self.reverberance_min, self.reverberance_max, size=(1,)).item()
-        dumping_factor: float = torch.randint(self.dumping_factor_min, self.dumping_factor_max, size=(1,)).item()
-        room_size: float = torch.randint(self.room_size_min, self.room_size_max, size=(1,)).item()
+        reverberance: float = torch.randint(
+            self.reverberance_min, self.reverberance_max, size=(1,)
+        ).item()
+        dumping_factor: float = torch.randint(
+            self.dumping_factor_min, self.dumping_factor_max, size=(1,)
+        ).item()
+        room_size: float = torch.randint(
+            self.room_size_min, self.room_size_max, size=(1,)
+        ).item()
 
         num_channels = x.shape[0]
         effect_chain: EffectChain = (

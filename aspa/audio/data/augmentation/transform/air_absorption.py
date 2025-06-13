@@ -29,7 +29,9 @@ class AirAbsorption(AudioAug):
         )
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.from_numpy(self.air_absorption(samples=x.numpy(), sample_rate=self.sr))
+        return torch.from_numpy(
+            self.air_absorption(samples=x.numpy(), sample_rate=self.sr)
+        )
 
     def __repr__(self) -> str:
         return (
