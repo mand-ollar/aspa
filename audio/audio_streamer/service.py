@@ -9,7 +9,7 @@ import numpy as np
 import pyaudio
 import soundfile as sf  # type: ignore
 
-from aspa.utils.printings import Colors
+from utils.printings import Colors
 
 from .microphones import LocalMicrophone, RemoteMicrophone
 
@@ -52,12 +52,8 @@ class LocalMicrophoneService(MicrophoneService):
     def listen(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
         return self._listen_local_microphone(listen_event=listen_event)
 
-    def _listen_local_microphone(
-        self, listen_event: threading.Event
-    ) -> Iterator[np.ndarray]:
-        assert isinstance(self.mic, LocalMicrophone), (
-            "The microphone must be a LocalMicrophone instance."
-        )
+    def _listen_local_microphone(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
+        assert isinstance(self.mic, LocalMicrophone), "The microphone must be a LocalMicrophone instance."
 
         p: pyaudio.PyAudio = pyaudio.PyAudio()
         stream: pyaudio.Stream = p.open(
@@ -83,9 +79,7 @@ class LocalMicrophoneService(MicrophoneService):
 
 
 class RemoteMicrophoneService(MicrophoneService):
-    def __init__(
-        self, mic: RemoteMicrophone, chunk_sec: float = 0.05, sr: int = 48000
-    ) -> None:
+    def __init__(self, mic: RemoteMicrophone, chunk_sec: float = 0.05, sr: int = 48000) -> None:
         super().__init__(mic=mic, chunk_sec=chunk_sec, sr=sr)
 
         self.proc: subprocess.Popen | None = None
@@ -94,12 +88,8 @@ class RemoteMicrophoneService(MicrophoneService):
     def listen(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
         return self._listen_remote_microphone(listen_event=listen_event)
 
-    def _listen_remote_microphone(
-        self, listen_event: threading.Event
-    ) -> Iterator[np.ndarray]:
-        assert isinstance(self.mic, RemoteMicrophone), (
-            "The microphone must be a RemoteMicrophone instance."
-        )
+    def _listen_remote_microphone(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
+        assert isinstance(self.mic, RemoteMicrophone), "The microphone must be a RemoteMicrophone instance."
 
         command: list[str] = [
             "ffmpeg",
@@ -127,9 +117,7 @@ class RemoteMicrophoneService(MicrophoneService):
             assert self.proc.stdout is not None, "Process stdout is None."
 
             yield np.frombuffer(
-                self.proc.stdout.read(
-                    np.dtype(np.float32).itemsize * int(self.chunk_sec * self.sr)
-                ),
+                self.proc.stdout.read(np.dtype(np.float32).itemsize * int(self.chunk_sec * self.sr)),
                 dtype=np.float32,
             )
 
@@ -172,9 +160,7 @@ class RecordService:
         self.tmp_filepath.unlink()
 
     def __call__(self) -> None:
-        tmp_filename = "".join(
-            np.random.choice(list(string.ascii_letters + string.digits), 10)
-        )
+        tmp_filename = "".join(np.random.choice(list(string.ascii_letters + string.digits), 10))
 
         self.filepath = Path(self.filepath)
         self.tmp_filepath = Path(f"/tmp/{tmp_filename}.tmp")

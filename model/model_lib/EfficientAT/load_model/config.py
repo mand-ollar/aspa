@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from aspa.utils.base_dataclass import BaseDataClass
+from utils.base_dataclass import BaseDataClass
 
 
 @dataclass

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torchaudio  # type: ignore
 
-from aspa.model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
+from model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
 
 
 class AugmentMelSTFT(nn.Module):
@@ -40,9 +40,7 @@ class AugmentMelSTFT(nn.Module):
         self.fmax_aug_range = model_cfg.fmax_aug_range
 
         self.preemphasis_coefficient: torch.Tensor
-        self.register_buffer(
-            "preemphasis_coefficient", torch.as_tensor([[[-0.97, 1]]]), persistent=False
-        )
+        self.register_buffer("preemphasis_coefficient", torch.as_tensor([[[-0.97, 1]]]), persistent=False)
 
         self.num_time_masks = model_cfg.num_time_masks
         self.num_freq_masks = model_cfg.num_freq_masks
@@ -50,16 +48,12 @@ class AugmentMelSTFT(nn.Module):
         if model_cfg.freqm == 0:
             self.freqm = torch.nn.Identity()
         else:
-            self.freqm = torchaudio.transforms.FrequencyMasking(
-                model_cfg.freqm, iid_masks=True
-            )
+            self.freqm = torchaudio.transforms.FrequencyMasking(model_cfg.freqm, iid_masks=True)
 
         if model_cfg.timem == 0:
             self.timem = torch.nn.Identity()
         else:
-            self.timem = torchaudio.transforms.TimeMasking(
-                model_cfg.timem, iid_masks=True
-            )
+            self.timem = torchaudio.transforms.TimeMasking(model_cfg.timem, iid_masks=True)
 
         assert model_cfg is not None, "model_cfg should not be None"
         self.model_cfg = model_cfg
@@ -87,11 +81,7 @@ class AugmentMelSTFT(nn.Module):
         x = torch.view_as_real(x)
         x = (x**2).sum(dim=-1)  # power mag
         fmin = self.fmin + torch.randint(self.fmin_aug_range, (1,)).item()
-        fmax = (
-            self.fmax
-            + self.fmax_aug_range // 2
-            - torch.randint(self.fmax_aug_range, (1,)).item()
-        )
+        fmax = self.fmax + self.fmax_aug_range // 2 - torch.randint(self.fmax_aug_range, (1,)).item()
 
         # don't augment eval data
         if not self.training:
@@ -109,9 +99,7 @@ class AugmentMelSTFT(nn.Module):
             vtln_warp_factor=1.0,
         )
         mel_basis = torch.as_tensor(
-            torch.nn.functional.pad(
-                input=mel_basis, pad=(0, 1), mode="constant", value=0.0
-            ),
+            torch.nn.functional.pad(input=mel_basis, pad=(0, 1), mode="constant", value=0.0),
             device=x.device,
         )
 

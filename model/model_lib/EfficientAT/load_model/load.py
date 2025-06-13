@@ -5,10 +5,10 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from aspa.model.model_lib.EfficientAT.architecture.ensemble import get_ensemble_model
-from aspa.model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
-from aspa.model.model_lib.EfficientAT.load_model.preprocess import AugmentMelSTFT
-from aspa.utils.discard_output import SuppressOutput
+from model.model_lib.EfficientAT.architecture.ensemble import get_ensemble_model
+from model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
+from model.model_lib.EfficientAT.load_model.preprocess import AugmentMelSTFT
+from utils.discard_output import SuppressOutput
 
 
 class ModelOutput:
@@ -20,12 +20,8 @@ def get_mel_DyMN(model_cfg: EfficientDyATParams) -> torch.nn.Sequential:
     mel = AugmentMelSTFT(model_cfg=model_cfg)
 
     if model_cfg.ensemble_model:
-        assert model_cfg.classes is not None, (
-            "Argument 'classes' should be provided if 'ensemble_model' is not None"
-        )
-        model = get_ensemble_model(
-            model_cfg.ensemble_model, num_classes=len(model_cfg.classes)
-        )
+        assert model_cfg.classes is not None, "Argument 'classes' should be provided if 'ensemble_model' is not None"
+        model = get_ensemble_model(model_cfg.ensemble_model, num_classes=len(model_cfg.classes))
     else:
         raise ValueError("ensemble_model should be provided")
 
@@ -50,9 +46,7 @@ def load_efficientdyat(
 
     # Load default model
     if ckpt_path is None:
-        assert model_cfg.classes is not None, (
-            "Argument 'classes' should be provided if 'ckpt_path' is None"
-        )
+        assert model_cfg.classes is not None, "Argument 'classes' should be provided if 'ckpt_path' is None"
         model = get_mel_DyMN(model_cfg=model_cfg)
 
         if not verbose:
