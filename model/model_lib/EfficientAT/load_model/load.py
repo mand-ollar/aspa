@@ -4,10 +4,11 @@ from typing import Any
 
 import torch
 import torch.nn as nn
-from aspa.model.model_lib.EfficientAT.architecture.ensemble import get_ensemble_model
-from aspa.model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
-from aspa.model.model_lib.EfficientAT.load_model.preprocess import AugmentMelSTFT
-from aspa.utils.discard_output import SuppressOutput
+
+from model.model_lib.EfficientAT.architecture.ensemble import get_ensemble_model
+from model.model_lib.EfficientAT.load_model.config import EfficientDyATParams
+from model.model_lib.EfficientAT.load_model.preprocess import AugmentMelSTFT
+from utils.discard_output import SuppressOutput
 
 
 class ModelOutput:

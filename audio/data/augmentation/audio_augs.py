@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 
 import torch
 import torch.nn as nn
-from aspa.utils.audio import format_audio
+
+from utils.audio import format_audio
 
 
 class AudioAug(ABC, nn.Module):

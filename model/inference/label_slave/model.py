@@ -6,7 +6,7 @@ from model.model_lib.EfficientAT.load_model import EfficientDyATParams, ModelOut
 from model.model_wrapper import ModelWrapper
 
 
-class EfficientIndustrial(ModelWrapper):
+class EfficientAT(ModelWrapper):
     def __init__(self, ckpt_path: str | Path | None, gpu_id: int | None = None) -> None:
         super().__init__(gpu_id=gpu_id)
 

@@ -9,7 +9,7 @@ from utils.printings import Colors
 
 from .config import LabelSlaveConfig
 from .dataset import LabelSlaveDataset
-from .model import EfficientIndustrial
+from .model import EfficientAT, ModelWrapper
 
 
 class LabelSlave:
@@ -17,7 +17,7 @@ class LabelSlave:
         self.config: LabelSlaveConfig = config
 
         self.dataset: LabelSlaveDataset
-        self.model: list[EfficientIndustrial] = []
+        self.model: list[ModelWrapper] = []
 
         assert isinstance(self.config.ckpt_path, list), "ckpt_path must be a list of paths."
         self._set_model(ckpt_paths=self.config.ckpt_path)
@@ -30,7 +30,7 @@ class LabelSlave:
         self.model = []
 
         for ckpt_path in ckpt_paths:
-            model: EfficientIndustrial = EfficientIndustrial(ckpt_path=ckpt_path, gpu_id=self.config.gpu_id)
+            model: EfficientAT = EfficientAT(ckpt_path=ckpt_path, gpu_id=self.config.gpu_id)
             assert model.classes is not None, "Model classes are not set."
             self.classes: list[str] = model.classes
 
@@ -89,11 +89,16 @@ class LabelSlave:
         return confidences, windows
 
     def _get_label_names_from_confidence(self, confidence: torch.Tensor) -> list[str]:
-        # confidence = confidence.squeeze()
         if confidence.ndim != 1:
             raise ValueError(f"Expected batch size 1, got {confidence.size()}.")
 
-        predictions: torch.Tensor = (confidence >= self.config.threshold).int()
+        predictions: torch.Tensor
+        if self.model[0].task == "tagging":
+            predictions = (confidence >= self.config.threshold).int()
+        elif self.model[0].task == "classification":
+            predictions = (confidence == confidence.max(dim=-1).values).int()
+        else:
+            raise ValueError(f"Invalid task type: {self.model[0].task}. Choose either 'tagging' or 'classification'.")
         labels_list: list[str] = [self.classes[i] for i in torch.where(predictions == 1)[0]]
 
         return labels_list
