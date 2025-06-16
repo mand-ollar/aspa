@@ -84,6 +84,10 @@ def setup_microphone(
     mic_cnt: int = 0
     while mic_cnt < n_mics:
         clear_screen()
+        if mic_cnt > 0:
+            _print("Set Microphones:")
+            for i, mic_service in enumerate(mic_services):
+                print(f"  - {i}: {mic_service.name} {Colors.GREEN}[Connected]{Colors.END}")
 
         mic_type_idx: int  # 0: Local, 1: Remote
         if available_remote_mics is None:
