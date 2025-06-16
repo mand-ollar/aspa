@@ -85,6 +85,7 @@ def setup_microphone(
     while mic_cnt <= n_mics:
         clear_screen()
         if mic_cnt > 0:
+            _print(f"Setting up {n_mics} microphones...")
             _print("Set Microphones:")
             for i, mic_service in enumerate(mic_services):
                 print(f"  - {i}: {mic_service.name} {Colors.GREEN}[Connected]{Colors.END}")
