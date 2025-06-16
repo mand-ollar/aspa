@@ -28,9 +28,7 @@ class _PyEffectChain:
         self._effects.append([effect_name, *params])
 
     def apply_flow_effects(self, tensor, src_info, target_info):
-        return torchaudio.sox_effects.apply_effects_tensor(
-            tensor, int(src_info["rate"]), self._effects
-        )
+        return torchaudio.sox_effects.apply_effects_tensor(tensor, int(src_info["rate"]), self._effects)
 
 
 class SoxEffect:
@@ -168,9 +166,7 @@ class EffectChain:
             if callable(effect):
                 if sox_effects:
                     assert target_info is not None, "`target_info` must be provided"
-                    x, sr = EffectChain._apply_sox_effects(
-                        sox_effects, x, src_info, target_info
-                    )
+                    x, sr = EffectChain._apply_sox_effects(sox_effects, x, src_info, target_info)
                     src_info = dict(target_info)
                     assert src_info["rate"] == sr
 
@@ -188,9 +184,7 @@ class EffectChain:
             x, _ = EffectChain._apply_sox_effects(sox_effects, x, src_info, target_info)
         return x
 
-    def time_dropout(
-        self, max_frames: Optional[int] = None, max_seconds: Optional[float] = None
-    ):
+    def time_dropout(self, max_frames: Optional[int] = None, max_seconds: Optional[float] = None):
         """
         >>> np.random.seed(1)
         >>> chain = EffectChain().time_dropout(max_seconds=0.1)
@@ -241,9 +235,7 @@ class EffectChain:
 
 
 class TimeDropout:
-    def __init__(
-        self, max_frames: Optional[int] = None, max_seconds: Optional[float] = None
-    ):
+    def __init__(self, max_frames: Optional[int] = None, max_seconds: Optional[float] = None):
         assert max_frames or max_seconds
         self.max_frames = max_frames
         self.max_seconds = max_seconds
@@ -273,9 +265,7 @@ class AdditiveNoise:
 
     def __call__(self, x, src_info, dst_info):
         noise_instance = self.noise_generator()
-        assert noise_instance.numel() == x.numel(), (
-            "Noise and signal shapes are incompatible"
-        )
+        assert noise_instance.numel() == x.numel(), "Noise and signal shapes are incompatible"
 
         noised = self.coeff * x + (1.0 - self.coeff) * noise_instance.view_as(x)
         return noised, src_info, dst_info
@@ -286,9 +276,7 @@ class ClipValue:
         self.clamp_factor = clamp_factor
 
     def __call__(self, x, src_info, dst_info):
-        factor = (
-            self.clamp_factor() if callable(self.clamp_factor) else self.clamp_factor
-        )
+        factor = self.clamp_factor() if callable(self.clamp_factor) else self.clamp_factor
         x_min, x_max = x.min(), x.max()
 
         x.clamp_(min=x_min * factor, max=x_max * factor)

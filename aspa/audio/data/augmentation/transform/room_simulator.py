@@ -50,9 +50,7 @@ class RoomSimulator(AudioAug):
         )
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.from_numpy(
-            self.room_simulator(samples=x.numpy(), sample_rate=self.sr)
-        )
+        return torch.from_numpy(self.room_simulator(samples=x.numpy(), sample_rate=self.sr))
 
     def __repr__(self) -> str:
         return (

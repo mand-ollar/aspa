@@ -5,9 +5,7 @@ from ..audio_augs import AudioAug
 
 
 class Normalize(AudioAug):
-    def __init__(
-        self, sr: int, p: float, min_lufs: float = -31, max_lufs: float = -13
-    ) -> None:
+    def __init__(self, sr: int, p: float, min_lufs: float = -31, max_lufs: float = -13) -> None:
         super().__init__(sr=sr, p=p)
 
         self.loudness_normalization: LoudnessNormalization = LoudnessNormalization(
@@ -17,9 +15,7 @@ class Normalize(AudioAug):
         )
 
     def process(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.from_numpy(
-            self.loudness_normalization(samples=x.numpy(), sample_rate=self.sr)
-        )
+        return torch.from_numpy(self.loudness_normalization(samples=x.numpy(), sample_rate=self.sr))
 
     def __repr__(self) -> str:
         return (
