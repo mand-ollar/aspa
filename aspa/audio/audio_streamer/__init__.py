@@ -1,5 +1,5 @@
 from .microphones import LocalMicrophone, RemoteMicrophone
-from .service import (
+from .services import (
     LocalMicrophoneService,
     MicrophoneService,
     RecordService,
