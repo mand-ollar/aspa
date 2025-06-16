@@ -44,8 +44,7 @@ class RecordingStreamer:
         self.buffering_sec: int = buffering_sec
         self.sr: int = sr
 
-        if after_recording_callback is not None:
-            self.after_recording_callback: AfterRecordingCallback = after_recording_callback
+        self.after_recording_callback: AfterRecordingCallback | None = after_recording_callback
 
         self.mic_services: list[MicrophoneService] = setup_microphone(
             n_mics=n_mics, sr=sr, available_remote_mics=avaiable_remote_mics
@@ -139,7 +138,8 @@ class RecordingStreamer:
                 print(constant_cnt, end="\r")
         _print("Recording & saving process finished")
 
-        self.after_recording_callback(record_services=self.record_services)
+        if self.after_recording_callback is not None:
+            self.after_recording_callback(record_services=self.record_services)
 
         input("Enter any key to continue...")
         print()
