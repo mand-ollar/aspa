@@ -21,9 +21,7 @@ class BaseDataClass:
                 invalid_fields.append(key)
 
         if invalid_fields:
-            print(
-                f"Warning: The following fields are not valid and will be ignored:\n{', '.join(invalid_fields)}"
-            )
+            print(f"Warning: The following fields are not valid and will be ignored:\n{', '.join(invalid_fields)}")
 
     def update_from_yaml(self, path: str | Path) -> None:
         """Update existing attributes dynamically from a YAML file."""
@@ -36,9 +34,7 @@ class BaseDataClass:
     def update_from_object(self, obj: object) -> None:
         """Update existing attributes dynamically."""
         attributes: list[str] = list(obj.__annotations__.keys())
-        update_dict: dict[str, Any] = {
-            k: v for k, v in obj.__dict__.items() if k in attributes
-        }
+        update_dict: dict[str, Any] = {k: v for k, v in obj.__dict__.items() if k in attributes}
 
         self.update_from_dict(**update_dict)
 

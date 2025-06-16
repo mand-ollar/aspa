@@ -20,12 +20,8 @@ def get_mel_DyMN(model_cfg: EfficientDyATParams) -> torch.nn.Sequential:
     mel = AugmentMelSTFT(model_cfg=model_cfg)
 
     if model_cfg.ensemble_model:
-        assert model_cfg.classes is not None, (
-            "Argument 'classes' should be provided if 'ensemble_model' is not None"
-        )
-        model = get_ensemble_model(
-            model_cfg.ensemble_model, num_classes=len(model_cfg.classes)
-        )
+        assert model_cfg.classes is not None, "Argument 'classes' should be provided if 'ensemble_model' is not None"
+        model = get_ensemble_model(model_cfg.ensemble_model, num_classes=len(model_cfg.classes))
     else:
         raise ValueError("ensemble_model should be provided")
 
@@ -50,9 +46,7 @@ def load_efficientdyat(
 
     # Load default model
     if ckpt_path is None:
-        assert model_cfg.classes is not None, (
-            "Argument 'classes' should be provided if 'ckpt_path' is None"
-        )
+        assert model_cfg.classes is not None, "Argument 'classes' should be provided if 'ckpt_path' is None"
         model = get_mel_DyMN(model_cfg=model_cfg)
 
         if not verbose:

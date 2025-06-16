@@ -12,9 +12,7 @@ warnings.filterwarnings("ignore")
 class ModelProtocol(Protocol):
     def __call__(self, x: torch.Tensor) -> Any: ...
     def forward(self, x: torch.Tensor) -> Any: ...
-    def to(
-        self, device: torch.device | None = None, dtype: torch.dtype | None = None
-    ) -> "ModelProtocol": ...
+    def to(self, device: torch.device | None = None, dtype: torch.dtype | None = None) -> "ModelProtocol": ...
     def eval(self) -> "ModelProtocol": ...
 
 
@@ -50,9 +48,7 @@ class ModelWrapper(ABC):
     def model(self) -> Any:
         assert self._model is not None, "Model must be set before use"
         if self.classes is None or self.sr is None or self.target_length is None:
-            raise ValueError(
-                "Model classes, sample rate, and target length must be set before use"
-            )
+            raise ValueError("Model classes, sample rate, and target length must be set before use")
 
         return self._model.to(self.device).eval()
 
@@ -92,9 +88,7 @@ class ModelWrapper(ABC):
         else:
             raise ValueError(f"Invalid task: {self.task}")
 
-        confidences = (
-            confidences.reshape(-1, len(self.classes)) if self.classes else confidences
-        )
+        confidences = confidences.reshape(-1, len(self.classes)) if self.classes else confidences
 
         return confidences
 
@@ -104,15 +98,9 @@ class ModelWrapper(ABC):
         print()
 
     def test_logits(self) -> None:
-        assert self.target_length is not None, (
-            "Target length must be set before testing logits"
-        )
+        assert self.target_length is not None, "Target length must be set before testing logits"
 
         self._print("Testing logits with zero tensor", end="")
-        print(
-            f"Result: {self.logits(torch.zeros(1, self.target_length, dtype=torch.float32))}\n"
-        )
+        print(f"Result: {self.logits(torch.zeros(1, self.target_length, dtype=torch.float32))}\n")
         self._print("Testing logits with one tensor", end="")
-        print(
-            f"Result: {self.logits(torch.ones(1, self.target_length, dtype=torch.float32))}\n"
-        )
+        print(f"Result: {self.logits(torch.ones(1, self.target_length, dtype=torch.float32))}\n")

@@ -46,9 +46,7 @@ class StrongLabeler:
         for i in range(n_chunks - 1):
             start = i * self.step
             end = min((i + 1) * self.step, self.abs_norm_data.shape[0])
-            self.outline[start:end] = torch.linspace(
-                self.outline[start], self.outline[end], steps=self.step
-            )
+            self.outline[start:end] = torch.linspace(self.outline[start], self.outline[end], steps=self.step)
 
     def _get_label(self) -> None:
         self.st_labels = []
