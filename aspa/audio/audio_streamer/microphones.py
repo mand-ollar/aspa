@@ -23,8 +23,8 @@ class RemoteMicrophone(BaseModel):
     ip: str
     port: int
     path: str
-    username: str
-    password: str
+    username: str | None = None
+    password: str | None = None
 
     @property
     def rtsp_url(self) -> str:
