@@ -29,7 +29,7 @@ def get_mel_DyMN(model_cfg: EfficientDyATParams) -> torch.nn.Sequential:
 
 
 def load_efficientdyat(
-    model_cfg: EfficientDyATParams,
+    model_cfg: EfficientDyATParams = EfficientDyATParams(),
     ckpt_path: str | Path | None = None,
     device: str | torch.device = "cpu",
     verbose: bool = False,
