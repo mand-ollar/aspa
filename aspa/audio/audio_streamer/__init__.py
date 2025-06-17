@@ -5,6 +5,7 @@ from .services import (
     RecordService,
     RemoteMicrophoneService,
 )
+from .usecases import RecordingStreamer
 from .utils import _print, setup_microphone
 
 __all__: list[str] = [
@@ -14,6 +15,7 @@ __all__: list[str] = [
     "MicrophoneService",
     "RecordService",
     "RemoteMicrophoneService",
+    "RecordingStreamer",
     "_print",
     "setup_microphone",
 ]
