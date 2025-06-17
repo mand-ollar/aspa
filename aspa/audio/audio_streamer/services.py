@@ -104,7 +104,7 @@ class RemoteMicrophoneService(MicrophoneService):
             "-ac",
             "1",
             "-ar",
-            "16000",
+            str(self.sr),
             "-",
         ]
         self.proc = subprocess.Popen(command, stdout=subprocess.PIPE)
