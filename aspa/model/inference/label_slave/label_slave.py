@@ -255,5 +255,5 @@ class LabelSlave:
 
         if save_path is None or print_result:
             print("Model inference result:")
-            print(self._as_txt(label=result, sr=self.config.sr))
+            print(self._as_txt(label=result, sr=self.config.sr) if not as_txt else result)
             print()
