@@ -217,8 +217,17 @@ class LabelSlave:
         )
 
         save_path: Path | None
-        if wav_path is not None:
+        if wav_path is not None and label_save_path is None:
             save_path = Path(wav_path).with_suffix(".txt" if as_txt else ".tsv")
+
+        elif wav_path is not None and label_save_path is not None:
+            if Path(label_save_path).suffix == "":
+                self._print(f"Appending suffix {'.txt' if as_txt else '.tsv'} to {label_save_path}")
+            elif as_txt and Path(label_save_path).suffix != ".txt":
+                self._print(f"Changing suffix from {Path(label_save_path).suffix} to .txt")
+            elif not as_txt and Path(label_save_path).suffix != ".tsv":
+                self._print(f"Changing suffix from {Path(label_save_path).suffix} to .tsv")
+            save_path = Path(label_save_path).with_suffix(".txt" if as_txt else ".tsv")
 
         elif wav_path is None and label_save_path is not None:
             if Path(label_save_path).suffix == "":
