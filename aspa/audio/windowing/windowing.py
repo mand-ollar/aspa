@@ -24,7 +24,12 @@ class Windowing:
 
         audio_files: list[Path] = []
         for audio_folder in self.audio_folders:
-            audio_files += list(audio_folder.rglob("*.wav"))
+            if audio_folder.is_dir():
+                audio_files += list(audio_folder.rglob("*.wav"))
+            elif audio_folder.is_file():
+                audio_files.append(audio_folder)
+            else:
+                raise ValueError(f"Invalid audio folder: {audio_folder}")
 
         return audio_files
 
