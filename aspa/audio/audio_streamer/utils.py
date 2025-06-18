@@ -57,7 +57,7 @@ def setup_local_microphone(chunk_sec: float, sr: int) -> LocalMicrophoneService 
 
 
 def setup_remote_microphone(
-    sr: int, available_mics: dict[str, list[RemoteMicrophone]]
+    chunk_sec: float, sr: int, available_mics: dict[str, list[RemoteMicrophone]]
 ) -> RemoteMicrophoneService | None:
     if not available_mics:
         _print("No remote microphones available.")
@@ -71,13 +71,13 @@ def setup_remote_microphone(
         select_option(options=[mic.name for mic in mic_list], description="Select remote microphone")
     ]
 
-    mic_service: RemoteMicrophoneService = RemoteMicrophoneService(mic=mic, chunk_sec=0.01, sr=sr)
+    mic_service: RemoteMicrophoneService = RemoteMicrophoneService(mic=mic, chunk_sec=chunk_sec, sr=sr)
 
     return mic_service
 
 
 def setup_microphone(
-    n_mics: int, sr: int, available_remote_mics: dict[str, list[RemoteMicrophone]] | None = None
+    chunk_sec: float, n_mics: int, sr: int, available_remote_mics: dict[str, list[RemoteMicrophone]] | None = None
 ) -> list[MicrophoneService]:
     mic_services: list[MicrophoneService] = []
 
@@ -100,7 +100,7 @@ def setup_microphone(
             mic_type_idx = select_option(options=["Local", "Remote"], description="Select microphone type")
 
         if mic_type_idx == 0:  # Local microphone
-            local_mic_output: LocalMicrophoneService | None = setup_local_microphone(chunk_sec=0.01, sr=sr)
+            local_mic_output: LocalMicrophoneService | None = setup_local_microphone(chunk_sec=chunk_sec, sr=sr)
             if local_mic_output is not None:
                 local_mic_service: LocalMicrophoneService = local_mic_output
                 _print(f"Working on {local_mic_service.mic.name} {Colors.GREEN}[Connected]{Colors.END}")
@@ -110,7 +110,7 @@ def setup_microphone(
         elif mic_type_idx == 1:  # Remote microphone
             assert available_remote_mics is not None, "Remote microphones are not available."
             remote_mic_output: RemoteMicrophoneService | None = setup_remote_microphone(
-                sr=sr, available_mics=available_remote_mics
+                chunk_sec=chunk_sec, sr=sr, available_mics=available_remote_mics
             )
             if remote_mic_output is not None:
                 remote_mic_service: RemoteMicrophoneService = remote_mic_output

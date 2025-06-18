@@ -47,7 +47,7 @@ class RecordingStreamer:
         self.after_recording_callback: AfterRecordingCallback | None = after_recording_callback
 
         self.mic_services: list[MicrophoneService] = setup_microphone(
-            n_mics=n_mics, sr=sr, available_remote_mics=avaiable_remote_mics
+            chunk_sec=0.01, n_mics=n_mics, sr=sr, available_remote_mics=avaiable_remote_mics
         )
 
         folder_name: str = date_time
