@@ -186,8 +186,8 @@ class LabelSlave:
         lines: list[str] = label.strip().split("\n")
         for line in lines:
             st_pnt_str, en_pnt_str, class_name = line.split("\t")
-            st_sec: float = int(st_pnt_str) / sr
-            en_sec: float = int(en_pnt_str) / sr
+            st_sec: float = int(float(st_pnt_str)) / sr
+            en_sec: float = int(float(en_pnt_str)) / sr
             new_lines.append(f"{st_sec:.2f}\t{en_sec:.2f}\t{class_name}")
 
         new_label: str = "\n".join(new_lines)
