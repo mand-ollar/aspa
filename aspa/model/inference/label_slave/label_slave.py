@@ -241,6 +241,7 @@ class LabelSlave:
                 with open(file=save_path, mode="w") as f:
                     f.write(result)
             self._print(f"Label file saved to {save_path}")
+        else:
             self._print("No save path provided. Labels will be printed but not be saved.")
 
         if save_path is None or print_result:
