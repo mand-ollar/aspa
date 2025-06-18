@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 import torch.nn as nn
 
@@ -11,8 +12,13 @@ from aspa.model.model_wrapper import ModelWrapper
 
 
 class EfficientAT(ModelWrapper):
-    def __init__(self, ckpt_path: str | Path | None, gpu_id: int | None = None) -> None:
-        super().__init__(gpu_id=gpu_id)
+    def __init__(
+        self,
+        ckpt_path: str | Path | None,
+        gpu_id: int | None = None,
+        task: Literal["tagging", "classification"] = "tagging",
+    ) -> None:
+        super().__init__(gpu_id=gpu_id, task=task)
 
         assert ckpt_path is not None, "Checkpoint path must be provided."
         self.model = ckpt_path

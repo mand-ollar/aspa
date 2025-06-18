@@ -30,7 +30,7 @@ class LabelSlave:
         self.model = []
 
         for ckpt_path in ckpt_paths:
-            model: EfficientAT = EfficientAT(ckpt_path=ckpt_path, gpu_id=self.config.gpu_id)
+            model: EfficientAT = EfficientAT(ckpt_path=ckpt_path, gpu_id=self.config.gpu_id, task=self.config.task)
             assert model.classes is not None, "Model classes are not set."
             self.classes: list[str] = model.classes
 

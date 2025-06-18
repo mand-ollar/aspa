@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, model_validator
 from typing_extensions import Self
@@ -16,6 +17,7 @@ class LabelSlaveConfig(BaseModel):
 
     batch_size: int = 1024
     num_workers: int = 16
+    task: Literal["tagging", "classification"] = "tagging"
 
     @model_validator(mode="after")
     def validation(self) -> Self:
