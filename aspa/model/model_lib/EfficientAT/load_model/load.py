@@ -43,6 +43,7 @@ def load_efficientdyat(
     if not verbose:
         suppress_output: SuppressOutput = SuppressOutput()
         suppress_output.suppress()
+        suppress_output.suppress_warnings()
 
     # Load default model
     if ckpt_path is None:
