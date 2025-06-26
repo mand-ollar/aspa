@@ -20,11 +20,12 @@ class SuppressOutput:
         self.original_stdout = sys.stdout
         sys.stdout = DiscardOutput()
 
-    def suppress_warnings(self) -> None:
-        warnings.filterwarnings("ignore")
-
     def restore(self) -> None:
         """Restore stdout."""
         sys.stdout = self.original_stdout
 
+    def suppress_warnings(self) -> None:
+        warnings.filterwarnings("ignore")
+
+    def restore_warnings(self) -> None:
         warnings.resetwarnings()
