@@ -1,6 +1,6 @@
-import wave
 from pathlib import Path
 
+import librosa
 from tqdm import tqdm
 
 from .config import WindowingConfig
@@ -47,11 +47,8 @@ class Windowing:
             label_filepath: Path to the label file. In sample point unit.
         """
 
+        audio_length: int = int(librosa.get_duration(filename=audio_filepath) * self.config.target_sr)
         audio_filepath = Path(audio_filepath)
-
-        with wave.open(f=str(audio_filepath), mode="rb") as wav_file:
-            duration_sec: float = wav_file.getnframes() / wav_file.getframerate()
-            audio_length: int = int(duration_sec * self.config.target_sr)
 
         with open(file=label_filepath, mode="r") as f:
             labels: list[str] = f.read().strip().split("\n")
