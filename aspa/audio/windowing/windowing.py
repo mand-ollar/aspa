@@ -47,7 +47,7 @@ class Windowing:
             label_filepath: Path to the label file. In sample point unit.
         """
 
-        audio_length: int = int(librosa.get_duration(filename=audio_filepath) * self.config.target_sr)
+        audio_length: int = int(librosa.get_duration(path=audio_filepath) * self.config.target_sr)
         audio_filepath = Path(audio_filepath)
 
         with open(file=label_filepath, mode="r") as f:
