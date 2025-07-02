@@ -1,5 +1,6 @@
 from .microphones import LocalMicrophone, RemoteMicrophone
 from .services import (
+    ListenResult,
     LocalMicrophoneService,
     MicrophoneService,
     RecordService,
@@ -11,6 +12,7 @@ from .utils import _print, setup_microphone
 __all__: list[str] = [
     "LocalMicrophone",
     "RemoteMicrophone",
+    "ListenResult",
     "LocalMicrophoneService",
     "MicrophoneService",
     "RecordService",
