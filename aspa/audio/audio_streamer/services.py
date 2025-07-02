@@ -2,6 +2,7 @@ import string
 import subprocess
 import threading
 from abc import ABC, abstractmethod
+from datetime import datetime
 from pathlib import Path
 from typing import Iterator
 
@@ -12,6 +13,15 @@ import soundfile as sf  # type: ignore
 from aspa.utils.printings import Colors
 
 from .microphones import LocalMicrophone, RemoteMicrophone
+
+
+class ListenResult:
+    audio_chunk: np.ndarray
+    timestamp: datetime
+
+    def __init__(self, audio_chunk: np.ndarray, timestamp: datetime) -> None:
+        self.audio_chunk = audio_chunk
+        self.timestamp = timestamp
 
 
 class MicrophoneService(ABC):
@@ -27,7 +37,7 @@ class MicrophoneService(ABC):
         self.name: str | None = None
 
     @abstractmethod
-    def listen(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
+    def listen(self, listen_event: threading.Event) -> Iterator[ListenResult]:
         """Listen to the microphone and yield audio chunks."""
 
 
@@ -49,10 +59,10 @@ class LocalMicrophoneService(MicrophoneService):
 
         self.name = f"{Colors.YELLOW}[Local] MIC <{mic.name}> - CH <{self.channel_index}>{Colors.END}"
 
-    def listen(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
+    def listen(self, listen_event: threading.Event) -> Iterator[ListenResult]:
         return self._listen_local_microphone(listen_event=listen_event)
 
-    def _listen_local_microphone(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
+    def _listen_local_microphone(self, listen_event: threading.Event) -> Iterator[ListenResult]:
         assert isinstance(self.mic, LocalMicrophone), "The microphone must be a LocalMicrophone instance."
 
         p: pyaudio.PyAudio = pyaudio.PyAudio()
@@ -71,7 +81,7 @@ class LocalMicrophoneService(MicrophoneService):
             all_channels: np.ndarray = np.frombuffer(raw_data, dtype=np.float32)
             all_channels = all_channels.reshape(frames, self.channel_count)
             selected: np.ndarray = all_channels[:, self.channel_index]
-            yield selected
+            yield ListenResult(audio_chunk=selected, timestamp=datetime.now())
 
         stream.stop_stream()
         stream.close()
@@ -85,10 +95,10 @@ class RemoteMicrophoneService(MicrophoneService):
         self.proc: subprocess.Popen | None = None
         self.name = f"{Colors.YELLOW}[Remote] MIC <{mic.name}> @{mic.ip}{Colors.END}"
 
-    def listen(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
+    def listen(self, listen_event: threading.Event) -> Iterator[ListenResult]:
         return self._listen_remote_microphone(listen_event=listen_event)
 
-    def _listen_remote_microphone(self, listen_event: threading.Event) -> Iterator[np.ndarray]:
+    def _listen_remote_microphone(self, listen_event: threading.Event) -> Iterator[ListenResult]:
         assert isinstance(self.mic, RemoteMicrophone), "The microphone must be a RemoteMicrophone instance."
 
         command: list[str] = [
@@ -116,9 +126,12 @@ class RemoteMicrophoneService(MicrophoneService):
 
             assert self.proc.stdout is not None, "Process stdout is None."
 
-            yield np.frombuffer(
-                self.proc.stdout.read(np.dtype(np.float32).itemsize * int(self.chunk_sec * self.sr)),
-                dtype=np.float32,
+            yield ListenResult(
+                audio_chunk=np.frombuffer(
+                    self.proc.stdout.read(np.dtype(np.float32).itemsize * int(self.chunk_sec * self.sr)),
+                    dtype=np.float32,
+                ),
+                timestamp=datetime.now(),
             )
 
 
@@ -138,8 +151,8 @@ class RecordService:
         assert self.filepath is not None
 
         with open(file=self.tmp_filepath, mode="wb") as f:
-            for chunk in self.mic_service.listen(listen_event=self.record_event):
-                f.write(chunk.tobytes())
+            for result in self.mic_service.listen(listen_event=self.record_event):
+                f.write(result.audio_chunk.tobytes())
 
                 if not self.record_event.is_set():
                     self._save()
