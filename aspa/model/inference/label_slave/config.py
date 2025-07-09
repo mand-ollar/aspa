@@ -1,31 +1,19 @@
-from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, model_validator
-from typing_extensions import Self
+from pydantic import BaseModel
+
+from aspa.model.model_wrapper import ModelWrapper
 
 
 class LabelSlaveConfig(BaseModel):
     name: str
-    ckpt_path: str | Path | list[str] | list[Path]
-    gpu_id: int | None = None
     window_sec: float = 2.0
-    hop_sec: float = 0.5
+    hop_sec: float = 1.0
     sr: int = 16000
 
+    model_wrapper: list[ModelWrapper]
     threshold: float = 0.5
 
     batch_size: int = 1024
     num_workers: int = 16
     task: Literal["tagging", "classification"] = "tagging"
-
-    @model_validator(mode="after")
-    def validation(self) -> Self:
-        if not isinstance(self.ckpt_path, list):
-            self.ckpt_path = [Path(self.ckpt_path)]
-
-        for ckpt_path in self.ckpt_path:
-            ckpt_path = Path(ckpt_path)
-            assert ckpt_path.exists(), f"File {ckpt_path} does not exist."
-
-        return self

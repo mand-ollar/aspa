@@ -9,7 +9,7 @@ from aspa.utils.printings import Colors
 
 from .config import LabelSlaveConfig
 from .dataset import LabelSlaveDataset
-from .model import EfficientAT, ModelWrapper
+from .model import ModelWrapper
 
 
 class LabelSlave:
@@ -17,26 +17,20 @@ class LabelSlave:
         self.config: LabelSlaveConfig = config
 
         self.dataset: LabelSlaveDataset
-        self.model: list[ModelWrapper] = []
+        self.model: list[ModelWrapper] = config.model_wrapper
 
-        assert isinstance(self.config.ckpt_path, list), "ckpt_path must be a list of paths."
-        self._set_model(ckpt_paths=self.config.ckpt_path)
+        self._set_model()
 
     @property
     def name(self) -> str:
         return self.config.name
 
-    def _set_model(self, ckpt_paths: list[str] | list[Path]) -> None:
-        self.model = []
-
-        for ckpt_path in ckpt_paths:
-            model: EfficientAT = EfficientAT(ckpt_path=ckpt_path, gpu_id=self.config.gpu_id, task=self.config.task)
-            assert model.classes is not None, "Model classes are not set."
-            self.classes: list[str] = model.classes
-
-            assert model.sr is not None, "Model sample rate is not set."
+    def _set_model(self) -> None:
+        for model in self.model:
+            assert model.sr is not None, "Model sample rate `sr` must be set."
+            assert model.classes is not None, "Model classes must be set."
             self.config.sr = model.sr
-            self.model.append(model)
+            self.classes = model.classes
 
     def _get_model_results(self, x: torch.Tensor, mode: Literal["logit", "confidence"]) -> torch.Tensor:
         results: list[torch.Tensor] = []
