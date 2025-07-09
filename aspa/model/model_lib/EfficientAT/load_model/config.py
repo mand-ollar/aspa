@@ -5,7 +5,7 @@ from aspa.utils.base_dataclass import BaseDataClass
 
 @dataclass
 class EfficientDyATParams(BaseDataClass):
-    ensemble_model: list[str] = field(default_factory=lambda: ["dymn20_as"])
+    pretrained_model: list[str] = field(default_factory=lambda: ["dymn20_as"])
     n_mels: int = 128
     target_sr: int = 48000
     data_length: int = 24000
