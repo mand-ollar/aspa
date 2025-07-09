@@ -109,10 +109,6 @@ def load_efficientdyat(
     else:
         common_prefix = ""
 
-    for key, value in trained_model_weight.items():
-        new_key: str = key.replace(common_prefix, "").lstrip(".")
-        new_state_dict[new_key] = value
-
     common_prefix_attach: str
     split_keys = [k.split(".") for k, _ in model[1].named_parameters()]
     common_parts = []
