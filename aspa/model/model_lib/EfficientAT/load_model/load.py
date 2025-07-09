@@ -113,6 +113,21 @@ def load_efficientdyat(
         new_key: str = key.replace(common_prefix, "").lstrip(".")
         new_state_dict[new_key] = value
 
+    common_prefix_attach: str
+    split_keys = [k.split(".") for k, _ in model[1].named_parameters()]
+    common_parts = []
+    for parts in zip(*split_keys):
+        if all(p == parts[0] for p in parts):
+            common_parts.append(parts[0])
+        else:
+            break
+    common_prefix_attach = ".".join(common_parts)
+
+    for key, value in trained_model_weight.items():
+        new_key: str = key.replace(common_prefix, "").lstrip(".")
+        new_key = f"{common_prefix_attach}.{new_key}" if common_prefix_attach else new_key
+        new_state_dict[new_key] = value
+
     # load model
     if isinstance(model, nn.Sequential):
         model[1].load_state_dict(new_state_dict)
