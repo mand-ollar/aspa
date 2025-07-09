@@ -61,6 +61,9 @@ class ModelWrapper(ABC):
     @abstractmethod
     def set_model(self, ckpt_path: str | Path | None) -> Any: ...
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.model(x)[0]
+
     def _format_tensor(self, x: torch.Tensor) -> torch.Tensor:
         if x.dim() == 1:
             x = x.reshape(1, 1, -1)
@@ -74,7 +77,7 @@ class ModelWrapper(ABC):
     def logits(self, x: torch.Tensor) -> torch.Tensor:
         x = self._format_tensor(x)
         x = x.to(self.device)
-        logits: torch.Tensor = self.model(x)[0]
+        logits: torch.Tensor = self.forward(x=x)
 
         return logits
 
