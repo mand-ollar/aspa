@@ -17,3 +17,6 @@ class LabelSlaveConfig(BaseModel):
     batch_size: int = 1024
     num_workers: int = 16
     task: Literal["tagging", "classification"] = "tagging"
+
+    class Config:
+        arbitrary_types_allowed = True
