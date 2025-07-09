@@ -61,7 +61,15 @@ class ModelWrapper(ABC):
     @abstractmethod
     def set_model(self, ckpt_path: str | Path | None) -> Any: ...
 
+    def _pre_forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self._format_tensor(x=x)
+        x = x.to(self.device)
+
+        return x
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self._pre_forward(x=x)
+
         return self.model(x)[0]
 
     def _format_tensor(self, x: torch.Tensor) -> torch.Tensor:
@@ -75,8 +83,6 @@ class ModelWrapper(ABC):
 
     @torch.no_grad()
     def logits(self, x: torch.Tensor) -> torch.Tensor:
-        x = self._format_tensor(x)
-        x = x.to(self.device)
         logits: torch.Tensor = self.forward(x=x)
 
         return logits
