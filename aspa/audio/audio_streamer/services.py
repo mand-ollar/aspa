@@ -117,22 +117,38 @@ class RemoteMicrophoneService(MicrophoneService):
             str(self.sr),
             "-",
         ]
-        self.proc = subprocess.Popen(command, stdout=subprocess.PIPE)
 
-        while listen_event.is_set():
-            if self.proc.poll() is not None:
-                self.proc = subprocess.Popen(command, stdout=subprocess.PIPE)
-                continue
+        def start_proc() -> subprocess.Popen | None:
+            return subprocess.Popen(command, stdout=subprocess.PIPE)
 
-            assert self.proc.stdout is not None, "Process stdout is None."
+        self.proc = start_proc()
 
-            yield ListenResult(
-                audio_chunk=np.frombuffer(
-                    self.proc.stdout.read(np.dtype(np.float32).itemsize * int(self.chunk_sec * self.sr)),
-                    dtype=np.float32,
-                ),
-                timestamp=datetime.now(),
-            )
+        try:
+            while listen_event.is_set():
+                assert self.proc is not None, "Process stdout is None."
+
+                if self.proc.poll() is not None:
+                    if self.proc.stdout:
+                        self.proc.stdout.close()
+                    self.proc.wait()
+                    self.proc = start_proc()
+                    continue
+
+                assert self.proc.stdout is not None, "Process stdout is None."
+
+                yield ListenResult(
+                    audio_chunk=np.frombuffer(
+                        self.proc.stdout.read(np.dtype(np.float32).itemsize * int(self.chunk_sec * self.sr)),
+                        dtype=np.float32,
+                    ),
+                    timestamp=datetime.now(),
+                )
+        finally:
+            if self.proc:
+                if self.proc.stdout:
+                    self.proc.stdout.close()
+                self.proc.terminate()
+                self.proc.wait()
 
 
 class RecordService:
