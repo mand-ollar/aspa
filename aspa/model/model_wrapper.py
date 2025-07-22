@@ -21,6 +21,8 @@ class ModelWrapper(ABC):
 
     def __init__(
         self,
+        model_name: str,
+        version: str = "0.1.0",
         gpu_id: int | None = None,
         task: Literal["classification", "tagging"] = "tagging",
     ) -> None:
