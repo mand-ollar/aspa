@@ -34,8 +34,16 @@ class ModelWrapper(ABC):
             self.device = torch.device(f"cuda:{gpu_id}")
             self._print(f"Using GPU: {gpu_id}")
         else:
-            self.device = torch.device("cpu")
-            self._print("Using CPU")
+            if torch.backends.mps.is_available():
+                self.device = torch.device("mps")
+                self._print("Using MPS")
+            else:
+                self.device = torch.device("cpu")
+                self._print("Using CPU")
+
+        self.model_name: str = model_name
+        self.version: str = version
+        self._print(f"Model name: {self.model_name} @ version: {self.version}")
 
         self.task: Literal["classification", "tagging"] = task
         self._print(f"Task set to: {self.task}")
