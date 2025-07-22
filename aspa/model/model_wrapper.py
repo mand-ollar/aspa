@@ -39,10 +39,10 @@ class ModelWrapper(ABC):
         self._print(f"Task set to: {self.task}")
 
         # Model setup
-        self._model: ModelProtocol | None = None
-        self.classes: list[str] | None = None
-        self.sr: int | None = None
-        self.target_length: int | None = None
+        self._model: ModelProtocol
+        self.classes: list[str]
+        self.sr: int
+        self.target_length: int
 
     @property
     def model(self) -> Any:
