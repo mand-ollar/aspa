@@ -47,7 +47,7 @@ class ModelWrapper(ABC):
     @property
     def model(self) -> Any:
         assert self._model is not None, "Model must be set before use"
-        if self.classes is None or self.sr is None or self.target_length is None:
+        if self.classes == [] or self.sr is None or self.target_length is None:
             raise ValueError("Model classes, sample rate, and target length must be set before use")
 
         return self._model.to(self.device).eval()
