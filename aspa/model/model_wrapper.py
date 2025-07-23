@@ -50,16 +50,52 @@ class ModelWrapper(ABC):
 
         # Model setup
         self._model: ModelProtocol
-        self.classes: list[str]
-        self.thresholds: dict[str, float]
-        self.sr: int
-        self.target_length: int
+        self._classes: list[str] = []
+        self._thresholds: dict[str, float] = {}
+        self._sr: int = 0
+        self._target_length: int = 0
+
+    @property
+    def classes(self) -> list[str]:
+        assert self._classes is not None, "Model classes must be set before use"
+        return self._classes
+
+    @classes.setter
+    def classes(self, classes: list[str]) -> None:
+        self._classes = classes
+
+    @property
+    def thresholds(self) -> dict[str, float]:
+        assert self._thresholds is not None, "Model thresholds must be set before use"
+        return self._thresholds
+
+    @thresholds.setter
+    def thresholds(self, thresholds: dict[str, float]) -> None:
+        self._thresholds = thresholds
+
+    @property
+    def sr(self) -> int:
+        assert self._sr is not None, "Model sample rate must be set before use"
+        return self._sr
+
+    @sr.setter
+    def sr(self, sr: int) -> None:
+        self._sr = sr
+
+    @property
+    def target_length(self) -> int:
+        assert self._target_length is not None, "Model target length must be set before use"
+        return self._target_length
+
+    @target_length.setter
+    def target_length(self, target_length: int) -> None:
+        self._target_length = target_length
 
     @property
     def model(self) -> Any:
         assert self._model is not None, "Model must be set before use"
-        if self.classes == [] or self.sr is None or self.target_length is None:
-            raise ValueError("Model classes, sample rate, and target length must be set before use")
+        if self.classes == [] or self.thresholds == {} or self.sr == 0 or self.target_length == 0:
+            raise ValueError("Model classes, thresholds, sample rate, and target length must be set before use")
 
         return self._model.to(self.device).eval()
 
@@ -68,10 +104,15 @@ class ModelWrapper(ABC):
         """Set the model. Put the model in self._model."""
         self._model = self.set_model(ckpt_path=ckpt_path)
 
-        assert self.classes is not None, "Model classes must be set before use"
-        assert self.thresholds is not None, "Model thresholds must be set before use"
-        assert self.sr is not None, "Model sample rate must be set before use"
-        assert self.target_length is not None, "Model target length must be set before use"
+        # Validate that all necessary properties are set before setting the model
+        if not self.classes:
+            raise ValueError("Model classes must be set before setting the model")
+        if not self.thresholds:
+            raise ValueError("Model thresholds must be set before setting the model")
+        if self.sr == 0:
+            raise ValueError("Model sample rate must be set before setting the model")
+        if self.target_length == 0:
+            raise ValueError("Model target length must be set before setting the model")
 
         self._print(f"Model set with checkpoint: {ckpt_path}")
 
@@ -137,9 +178,8 @@ class ModelWrapper(ABC):
         print()
 
     def test_logits(self) -> None:
-        assert self.target_length is not None, "Target length must be set before testing logits"
-
         self._print("Testing logits with zero tensor", end="")
         print(f"Result: {self.logits(torch.zeros(1, self.target_length, dtype=torch.float32))}\n")
+
         self._print("Testing logits with one tensor", end="")
         print(f"Result: {self.logits(torch.ones(1, self.target_length, dtype=torch.float32))}\n")
