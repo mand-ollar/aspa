@@ -78,7 +78,7 @@ class ModelWrapper(ABC):
     @abstractmethod
     def set_model(self, ckpt_path: str | Path | None) -> Any:
         """Set the model.
-        Additionally, set `self.classes`, `self.thresholds`, `self.sr`, and `self.target_length`.
+        Additionally, set `self.classes`, `self.sr`, and `self.target_length`.
 
         Args:
             ckpt_path: Path to the checkpoint file.
