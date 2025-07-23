@@ -24,6 +24,7 @@ class ModelWrapper(ABC):
         version: str = "0.1.0",
         gpu_id: int | None = None,
         task: Literal["classification", "tagging"] = "tagging",
+        bypass: bool = False,
     ) -> None:
         # Device setup
         self.device: torch.device
@@ -47,6 +48,9 @@ class ModelWrapper(ABC):
 
         self.task: Literal["classification", "tagging"] = task
         self._print(f"Task set to: {self.task}")
+
+        self.bypass: bool = bypass
+        self._print(f"Bypass set to: {self.bypass}")
 
         self.apply_configurations(classes=classes, thresholds=thresholds, sr=sr, target_length=target_length)
         self._print(
@@ -113,9 +117,9 @@ class ModelWrapper(ABC):
 
         return logits
 
-    def confidences(self, x: torch.Tensor, bypass: bool = False) -> torch.Tensor:
+    def confidences(self, x: torch.Tensor) -> torch.Tensor:
         logits: torch.Tensor = self.logits(x)
-        if bypass:
+        if self.bypass:
             return logits
 
         confidences: torch.Tensor
