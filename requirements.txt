@@ -3,6 +3,7 @@ audiomentations
 librosa
 numpy
 pandas
+pandas-stubs
 PyAudio
 pydantic
 PyYAML

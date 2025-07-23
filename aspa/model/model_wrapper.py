@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal
 
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -52,6 +53,10 @@ class ModelWrapper(ABC):
         self.thresholds: dict[str, float] = thresholds
         self.sr: int = sr
         self.target_length: int = target_length
+
+        self._print(
+            f"\n{pd.DataFrame(data={'classes': self.classes, 'thresholds': self.thresholds}).T.to_markdown(tablefmt='grid')}"  # noqa: E501
+        )
 
     @property
     def model(self) -> nn.Module | nn.Sequential:
