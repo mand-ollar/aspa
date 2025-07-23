@@ -68,9 +68,8 @@ class ModelWrapper(ABC):
         return self._model.to(self.device).eval()
 
     @model.setter
-    def model(self, ckpt_path: str | Path | None) -> None:
-        self.ckpt_path = ckpt_path
-        self._model = self.set_model(ckpt_path=ckpt_path)
+    def model(self) -> None:
+        self._model = self.set_model(ckpt_path=self.ckpt_path)
 
     @abstractmethod
     def set_model(self, ckpt_path: str | Path | None) -> Any:
