@@ -63,8 +63,12 @@ class ModelWrapper(ABC):
 
     @property
     def model(self) -> nn.Module | nn.Sequential:
-        self._print(f"Model set with checkpoint: {self.ckpt_path}")
-        return self.set_model(ckpt_path=self.ckpt_path).to(self.device).eval()
+        return self.model.to(self.device).eval()
+
+    @model.setter
+    def model(self, ckpt_path: str | Path | None) -> None:
+        self.ckpt_path = ckpt_path
+        self.model = self.set_model(ckpt_path=ckpt_path)
 
     @abstractmethod
     def set_model(self, ckpt_path: str | Path | None) -> Any:
