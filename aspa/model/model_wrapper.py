@@ -50,7 +50,7 @@ class ModelWrapper(ABC):
 
         self.apply_configurations(classes=classes, thresholds=thresholds, sr=sr, target_length=target_length)
         self._print(
-            f"\n{pd.DataFrame(data={'classes': self.classes, 'thresholds': self.thresholds}).T.to_markdown(tablefmt='grid')}"  # noqa: E501
+            f"\n{pd.DataFrame(data={'classes': self.classes, 'thresholds': self.thresholds.values()}).T.to_markdown(tablefmt='grid', index=False)}"  # noqa: E501
         )
 
     def apply_configurations(
