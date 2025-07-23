@@ -51,6 +51,7 @@ class ModelWrapper(ABC):
         # Model setup
         self._model: ModelProtocol
         self.classes: list[str]
+        self.thresholds: dict[str, float]
         self.sr: int
         self.target_length: int
 
@@ -69,7 +70,16 @@ class ModelWrapper(ABC):
         self._print(f"Model set with checkpoint: {ckpt_path}")
 
     @abstractmethod
-    def set_model(self, ckpt_path: str | Path | None) -> Any: ...
+    def set_model(self, ckpt_path: str | Path | None) -> Any:
+        """Set the model.
+        Additionally, set `self.classes`, `self.thresholds`, `self.sr`, and `self.target_length`.
+
+        Args:
+            ckpt_path: Path to the checkpoint file.
+
+        Returns:
+            The model.
+        """
 
     def _pre_forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self._format_tensor(x=x)
@@ -77,10 +87,14 @@ class ModelWrapper(ABC):
 
         return x
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    @abstractmethod
+    def forward_impl(self, x: torch.Tensor) -> torch.Tensor | Any:
+        """Forward pass implementation."""
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor | Any:
         x = self._pre_forward(x=x)
 
-        return self.model(x)[0]
+        return self.forward_impl(x=x)
 
     def _format_tensor(self, x: torch.Tensor) -> torch.Tensor:
         if x.dim() == 1:
