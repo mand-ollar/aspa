@@ -53,6 +53,8 @@ class ModelWrapper(ABC):
             f"\n{pd.DataFrame(data={'classes': self.classes, 'thresholds': self.thresholds.values()}).set_index('classes').T.to_markdown(tablefmt='grid', index=False)}"  # noqa: E501
         )
 
+        self._model: nn.Module | nn.Sequential
+
     def apply_configurations(
         self, classes: list[str], thresholds: dict[str, float], sr: int, target_length: int
     ) -> None:
@@ -63,12 +65,12 @@ class ModelWrapper(ABC):
 
     @property
     def model(self) -> nn.Module | nn.Sequential:
-        return self.model.to(self.device).eval()
+        return self._model.to(self.device).eval()
 
     @model.setter
     def model(self, ckpt_path: str | Path | None) -> None:
         self.ckpt_path = ckpt_path
-        self.model = self.set_model(ckpt_path=ckpt_path)
+        self._model = self.set_model(ckpt_path=ckpt_path)
 
     @abstractmethod
     def set_model(self, ckpt_path: str | Path | None) -> Any:
