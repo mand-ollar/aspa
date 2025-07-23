@@ -48,15 +48,18 @@ class ModelWrapper(ABC):
         self.task: Literal["classification", "tagging"] = task
         self._print(f"Task set to: {self.task}")
 
-        # Model setup
-        self.classes: list[str] = classes
-        self.thresholds: dict[str, float] = thresholds
-        self.sr: int = sr
-        self.target_length: int = target_length
-
+        self.apply_configurations(classes=classes, thresholds=thresholds, sr=sr, target_length=target_length)
         self._print(
             f"\n{pd.DataFrame(data={'classes': self.classes, 'thresholds': self.thresholds}).T.to_markdown(tablefmt='grid')}"  # noqa: E501
         )
+
+    def apply_configurations(
+        self, classes: list[str], thresholds: dict[str, float], sr: int, target_length: int
+    ) -> None:
+        self.classes = classes
+        self.thresholds = thresholds
+        self.sr = sr
+        self.target_length = target_length
 
     @property
     def model(self) -> nn.Module | nn.Sequential:
