@@ -67,6 +67,12 @@ class ModelWrapper(ABC):
     def model(self, ckpt_path: str | Path | None) -> None:
         """Set the model. Put the model in self._model."""
         self._model = self.set_model(ckpt_path=ckpt_path)
+
+        assert self.classes is not None, "Model classes must be set before use"
+        assert self.thresholds is not None, "Model thresholds must be set before use"
+        assert self.sr is not None, "Model sample rate must be set before use"
+        assert self.target_length is not None, "Model target length must be set before use"
+
         self._print(f"Model set with checkpoint: {ckpt_path}")
 
     @abstractmethod
