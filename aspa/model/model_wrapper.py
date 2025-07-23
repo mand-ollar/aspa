@@ -113,8 +113,11 @@ class ModelWrapper(ABC):
 
         return logits
 
-    def confidences(self, x: torch.Tensor) -> torch.Tensor:
+    def confidences(self, x: torch.Tensor, bypass: bool = False) -> torch.Tensor:
         logits: torch.Tensor = self.logits(x)
+        if bypass:
+            return logits
+
         confidences: torch.Tensor
         if self.task == "classification":
             confidences = torch.softmax(logits, dim=-1)
