@@ -1,19 +1,12 @@
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Literal
 
 import torch
+import torch.nn as nn
 
 warnings.filterwarnings("ignore")
-
-
-@runtime_checkable
-class ModelProtocol(Protocol):
-    def __call__(self, x: torch.Tensor) -> Any: ...
-    def forward(self, x: torch.Tensor) -> Any: ...
-    def to(self, device: torch.device | None = None, dtype: torch.dtype | None = None) -> "ModelProtocol": ...
-    def eval(self) -> "ModelProtocol": ...
 
 
 class ModelWrapper(ABC):
@@ -21,6 +14,11 @@ class ModelWrapper(ABC):
 
     def __init__(
         self,
+        ckpt_path: str | Path | None,
+        classes: list[str],
+        thresholds: dict[str, float],
+        sr: int,
+        target_length: int,
         model_name: str,
         version: str = "0.1.0",
         gpu_id: int | None = None,
@@ -41,6 +39,7 @@ class ModelWrapper(ABC):
                 self.device = torch.device("cpu")
                 self._print("Using CPU")
 
+        self.ckpt_path: str | Path | None = ckpt_path
         self.model_name: str = model_name
         self.version: str = version
         self._print(f"Model name: {self.model_name} @ version: {self.version}")
@@ -49,72 +48,15 @@ class ModelWrapper(ABC):
         self._print(f"Task set to: {self.task}")
 
         # Model setup
-        self._model: ModelProtocol
-        self._classes: list[str] = []
-        self._thresholds: dict[str, float] = {}
-        self._sr: int = 0
-        self._target_length: int = 0
+        self.classes: list[str] = classes
+        self.thresholds: dict[str, float] = thresholds
+        self.sr: int = sr
+        self.target_length: int = target_length
 
     @property
-    def classes(self) -> list[str]:
-        assert self._classes is not None, "Model classes must be set before use"
-        return self._classes
-
-    @classes.setter
-    def classes(self, classes: list[str]) -> None:
-        self._classes = classes
-
-    @property
-    def thresholds(self) -> dict[str, float]:
-        assert self._thresholds is not None, "Model thresholds must be set before use"
-        return self._thresholds
-
-    @thresholds.setter
-    def thresholds(self, thresholds: dict[str, float]) -> None:
-        self._thresholds = thresholds
-
-    @property
-    def sr(self) -> int:
-        assert self._sr is not None, "Model sample rate must be set before use"
-        return self._sr
-
-    @sr.setter
-    def sr(self, sr: int) -> None:
-        self._sr = sr
-
-    @property
-    def target_length(self) -> int:
-        assert self._target_length is not None, "Model target length must be set before use"
-        return self._target_length
-
-    @target_length.setter
-    def target_length(self, target_length: int) -> None:
-        self._target_length = target_length
-
-    @property
-    def model(self) -> Any:
-        assert self._model is not None, "Model must be set before use"
-        if self.classes == [] or self.thresholds == {} or self.sr == 0 or self.target_length == 0:
-            raise ValueError("Model classes, thresholds, sample rate, and target length must be set before use")
-
-        return self._model.to(self.device).eval()
-
-    @model.setter
-    def model(self, ckpt_path: str | Path | None) -> None:
-        """Set the model. Put the model in self._model."""
-        self._model = self.set_model(ckpt_path=ckpt_path)
-
-        # Validate that all necessary properties are set before setting the model
-        if not self.classes:
-            raise ValueError("Model classes must be set before setting the model")
-        if not self.thresholds:
-            raise ValueError("Model thresholds must be set before setting the model")
-        if self.sr == 0:
-            raise ValueError("Model sample rate must be set before setting the model")
-        if self.target_length == 0:
-            raise ValueError("Model target length must be set before setting the model")
-
-        self._print(f"Model set with checkpoint: {ckpt_path}")
+    def model(self) -> nn.Module | nn.Sequential:
+        self._print(f"Model set with checkpoint: {self.ckpt_path}")
+        return self.set_model(ckpt_path=self.ckpt_path).to(self.device).eval()
 
     @abstractmethod
     def set_model(self, ckpt_path: str | Path | None) -> Any:
