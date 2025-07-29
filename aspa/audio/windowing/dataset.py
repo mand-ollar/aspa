@@ -13,7 +13,7 @@ from .types import WindowingResult
 
 
 class WindowingDataset(Dataset):
-    MAX_AUDIO_STORAGE: int = 10
+    MAX_AUDIO_STORAGE_MIN: int = 10
 
     def __init__(self, config: WindowingConfig, windows_dict: dict[Path, dict[int, WindowingResult]]) -> None:
         self.config: WindowingConfig = config
@@ -81,7 +81,10 @@ class WindowingDataset(Dataset):
         else:
             audio = self.audio_storage[audio_path]
 
-        if len(self.audio_storage) > self.MAX_AUDIO_STORAGE:
+        if (
+            len(self.audio_storage) > 1
+            and sum(map(len, self.audio_storage.values())) > self.MAX_AUDIO_STORAGE_MIN * self.config.target_sr
+        ):
             self.audio_storage.popitem(last=False)
 
         windowed_audio: torch.Tensor = audio[window_st:window_en]
