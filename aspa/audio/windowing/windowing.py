@@ -71,9 +71,11 @@ class Windowing:
             st_number: float = float(st)
             en_number: float = float(en)
 
-            assert st_number < en_number, (
+            assert st_number <= en_number, (
                 f"Start time must be smaller than end time: \n\t - Line {labels.index(label) + 1} of {audio_filepath}, {label}.\n"
             )
+            if st_number == en_number:
+                continue
 
             if is_pnt_unit:
                 split_labels.append((int(st_number), int(en_number), label_name))
