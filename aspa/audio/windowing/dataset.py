@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from pathlib import Path
 
 import soundfile as sf  # type: ignore
@@ -12,25 +13,18 @@ from .types import WindowingResult
 
 
 class WindowingDataset(Dataset):
+    MAX_AUDIO_STORAGE: int = 10
+
     def __init__(self, config: WindowingConfig, windows_dict: dict[Path, dict[int, WindowingResult]]) -> None:
         self.config: WindowingConfig = config
 
         self.labels_list: list[torch.Tensor] = []
         self.windowing_results: list[WindowingResult] = []
 
+        self.audio_storage: OrderedDict[Path, torch.Tensor] = OrderedDict()
         self.audio_segment_info: list[tuple[Path, int, int]] = []
-        self.full_audio_dict: dict[Path, torch.Tensor] = {}
 
         for audio_path, windows in windows_dict.items():
-            audio_np, sr = sf.read(file=str(audio_path))
-            audio: torch.Tensor = torch.from_numpy(audio_np).float()
-            if sr != config.target_sr:
-                audio = resample(waveform=audio, orig_freq=sr, new_freq=config.target_sr)
-            audio = audio.squeeze()
-            assert audio.dim() == 1, "Audio must be mono."
-
-            self.full_audio_dict[audio_path] = audio
-
             for window in tqdm(windows.values(), desc="Creating window dataset", leave=False, ncols=80):
                 if (config.others is not None and set(window.iv_name) == set([config.others])) or (
                     config.others is None and [element for element in window.iv_name if element is not None] == []
@@ -75,7 +69,23 @@ class WindowingDataset(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         audio_path, window_st, window_en = self.audio_segment_info[idx]
-        windowed_audio: torch.Tensor = self.full_audio_dict[audio_path][window_st:window_en]
+
+        if audio_path not in self.audio_storage:
+            audio_np, sr = sf.read(file=str(audio_path))
+            audio: torch.Tensor = torch.from_numpy(audio_np).float()
+            if sr != self.config.target_sr:
+                audio = resample(waveform=audio, orig_freq=sr, new_freq=self.config.target_sr)
+            audio = audio.squeeze()
+            assert audio.dim() == 1, "Audio must be mono."
+            self.audio_storage[audio_path] = audio
+        else:
+            audio = self.audio_storage[audio_path]
+
+        if len(self.audio_storage) > self.MAX_AUDIO_STORAGE:
+            self.audio_storage.popitem(last=False)
+
+        windowed_audio: torch.Tensor = audio[window_st:window_en]
+        windowed_audio = self._pad_or_truncate(audio=windowed_audio)
 
         return windowed_audio.unsqueeze(dim=0), self.labels[idx]
 
