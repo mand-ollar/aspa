@@ -41,6 +41,7 @@ class WindowingConfig(BaseDataClass):
     absolute_ratio_threshold: float = 1.0
     target_sr: int = 32000
     include_others: Literal["lb", "ulb", "all", "none"] = "all"
+    exclude_labels: list[str] = field(default_factory=list)
     others: str | None = None
     make_missing_label_files: bool = False
 

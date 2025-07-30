@@ -108,12 +108,17 @@ class Windowing:
         en_int: int
         found: bool
 
+        excluded_labels: list[str] = []
+
         # If the audio is slightly longer than the window size,
         # and the target audio is shorter than the window size,
         # place the target audio in the middle and make the window.
         # Only for target audio.
         if len(split_labels) == 1 and audio_length > window_size:
             st_int, en_int, label_name = split_labels[0]
+
+            if label_name in self.config.exclude_labels:
+                return {}
 
             if en_int - st_int < window_size:
                 found = False
@@ -170,6 +175,10 @@ class Windowing:
                                 relative_ratio >= self.config.relative_ratio_threshold
                                 or absolute_ratio >= self.config.absolute_ratio_threshold
                             ):
+                                if label_name in self.config.exclude_labels:
+                                    skip_window = True
+                                    excluded_labels.append(label_name)
+                                    break
                                 result.iv_name.append(iv_label_name)
                                 found = True
                                 break
@@ -204,6 +213,11 @@ class Windowing:
 
             windowed_results[cnt] = result
             cnt += 1
+
+        if len(excluded_labels) > 0 and verbose:
+            print("Excluded labels:")
+            print(excluded_labels)
+            print()
 
         return windowed_results
 
