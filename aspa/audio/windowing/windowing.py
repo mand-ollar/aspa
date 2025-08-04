@@ -12,6 +12,7 @@ class Windowing:
     def __init__(self, config: WindowingConfig) -> None:
         self.config: WindowingConfig = config
         self.oov_list: list[str] = []
+        self.excluded_labels: list[str] = []
 
         self.audio_folders: list[Path]
         if isinstance(self.config.audio_folders, (str, Path)):
@@ -108,8 +109,6 @@ class Windowing:
         en_int: int
         found: bool
 
-        excluded_labels: list[str] = []
-
         # If the audio is slightly longer than the window size,
         # and the target audio is shorter than the window size,
         # place the target audio in the middle and make the window.
@@ -154,10 +153,13 @@ class Windowing:
 
             skip_window: bool = False
 
-            for j, (st_int, en_int, label_name) in enumerate(split_labels):
-                if st_int > result.window_en:
-                    break
+            if (
+                min([split_label[0] for split_label in split_labels]) > result.window_en
+                or max([split_label[1] for split_label in split_labels]) < result.window_st
+            ):
+                break
 
+            for j, (st_int, en_int, label_name) in enumerate(split_labels):
                 if st_int < result.window_en and en_int > result.window_st:  # Target overlapped with the window
                     overlap: float = min(en_int, result.window_en) - max(st_int, result.window_st)
                     relative_ratio: float = overlap / window_size
@@ -177,12 +179,13 @@ class Windowing:
                             ):
                                 if label_name in self.config.exclude_labels:
                                     skip_window = True
-                                    excluded_labels.append(label_name)
+                                    if label_name not in self.excluded_labels:
+                                        self.excluded_labels.append(label_name)
                                     break
                                 result.iv_name.append(iv_label_name)
                                 found = True
                                 break
-                            elif iv_label_name in self.config.classes:
+                            else:
                                 skip_window = True
                                 break
 
@@ -190,6 +193,12 @@ class Windowing:
                         break
 
                     if not found:
+                        if label_name in self.config.exclude_labels:
+                            skip_window = True
+                            if label_name not in self.excluded_labels:
+                                self.excluded_labels.append(label_name)
+                            break
+
                         result.iv_name.append(self.config.others)
 
                     if (
@@ -213,11 +222,6 @@ class Windowing:
 
             windowed_results[cnt] = result
             cnt += 1
-
-        if len(excluded_labels) > 0 and verbose:
-            print("Excluded labels:")
-            print(excluded_labels)
-            print()
 
         return windowed_results
 
@@ -264,6 +268,10 @@ class Windowing:
 
         print("Windowing oov list:")
         print(self.oov_list)
+        print()
+
+        print("Windowing excluded labels:")
+        print(self.excluded_labels)
         print()
 
         return windows_dict
