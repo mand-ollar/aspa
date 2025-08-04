@@ -153,7 +153,7 @@ class Windowing:
 
             skip_window: bool = False
 
-            if (
+            if not split_labels or (
                 min([split_label[0] for split_label in split_labels]) > result.window_en
                 or max([split_label[1] for split_label in split_labels]) < result.window_st
             ):
