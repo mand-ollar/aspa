@@ -25,10 +25,8 @@ class WindowingDataset(Dataset):
         self.audio_segment_info: list[tuple[Path, int, int]] = []
 
         for audio_path, windows in windows_dict.items():
-            for window in tqdm(windows.values(), desc="Creating window dataset", leave=False, ncols=80):
-                if (config.others is not None and set(window.iv_name) == set([config.others])) or (
-                    config.others is None and [element for element in window.iv_name if element is not None] == []
-                ):
+            for window in tqdm(windows.values(), desc="Creating window dataset", leave=False, ncols=80, disable=False):
+                if config.others in window.iv_name or not window.iv_name:
                     if config.include_others == "lb":
                         if window.label_name == []:
                             continue
