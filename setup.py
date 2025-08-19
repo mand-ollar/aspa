@@ -13,4 +13,7 @@ setup(
     description="Audio Signal Processing & Analysis (ASPA) is a Python package for audio signal processing and analysis.",
     packages=find_packages(include=["aspa", "aspa.*"]),
     install_requires=parse_requirements("requirements.txt"),
+    python_requires=">=3.10",
+    package_data={"aspa": ["py.typed"]},
+    include_package_data=True,
 )
