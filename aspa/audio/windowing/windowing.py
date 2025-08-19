@@ -1,7 +1,6 @@
-import time
 from pathlib import Path
 from types import MethodType
-from typing import Optional
+from typing import Literal, Optional
 
 import numpy as np
 from rich.progress import track
@@ -172,13 +171,16 @@ class Windowing:
 
         return False
 
-    def _windowing(self, audio_path: Path, verbose: bool = False) -> dict[int, WindowingResult]:
-        st: float = time.time()
+    def _windowing(
+        self,
+        audio_path: Path,
+        verbose: bool = False,
+        progress: bool = True,
+    ) -> dict[int, WindowingResult]:
         audio_length: int = int(get_duration_sec(filepath=audio_path) * self.config.target_sr)
         _label_path: Path = self._get_label_file_for_audio(audio_path=audio_path)
         labels: np.ndarray = self._get_labels_for_audio(audio_path=audio_path, label_path=_label_path)
         num_windows: int = self._num_windows(audio_length=audio_length)
-        print(f"Time taken: {time.time() - st:.2f} seconds")
 
         # If the audio is slightly longer than the window size,
         # and the target audio is shorter than the window size,
@@ -191,7 +193,7 @@ class Windowing:
         windowed_results: dict[int, WindowingResult] = {}
         cnt: int = 0
 
-        for i in track(range(num_windows), description="Windowing", transient=True):
+        for i in track(range(num_windows), description="Windowing", transient=True, disable=not progress):
             others: bool = False
 
             windowing_result: WindowingResult = WindowingResult(
@@ -296,7 +298,9 @@ class Windowing:
 
         return windowed_results
 
-    def get_windows(self, verbose: bool = False) -> dict[Path, dict[int, WindowingResult]]:
+    def get_windows(
+        self, verbose: bool = False, progress: Literal["overall", "each"] = "overall"
+    ) -> dict[Path, dict[int, WindowingResult]]:
         """
         Window the audio files and save as wav files in the folder.
 
@@ -309,8 +313,12 @@ class Windowing:
         audio_paths: list[Path] = self._gather_audio_files()
         windows_dict: dict[Path, dict[int, WindowingResult]] = {}
 
-        for audio_path in audio_paths:
-            windows_dict[audio_path] = self._windowing(audio_path=audio_path, verbose=verbose)
+        for audio_path in track(
+            audio_paths, description="Windowing Progress", transient=True, disable=(progress != "overall")
+        ):
+            windows_dict[audio_path] = self._windowing(
+                audio_path=audio_path, verbose=verbose, progress=(progress == "each")
+            )
 
         print("Windowing oov list:")
         print(self.oov_list)

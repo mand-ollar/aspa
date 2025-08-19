@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 
 import librosa
@@ -49,7 +48,6 @@ class Windowing:
             label_filepath: Path to the label file. In sample point unit.
         """
 
-        st_time: float = time.time()
         audio_length: int = int(librosa.get_duration(path=audio_filepath) * self.config.target_sr)
         audio_filepath = Path(audio_filepath)
 
@@ -103,7 +101,6 @@ class Windowing:
             audio_length += start_offset
 
         num_windows: int = (audio_length - window_size) // hop_size + 1
-        print(f"Time taken: {time.time() - st_time:.2f} seconds")
 
         result: WindowingResult
         windowed_results: dict[int, WindowingResult]
@@ -144,7 +141,7 @@ class Windowing:
 
         windowed_results = {}
         cnt: int = 0
-        for i in tqdm(range(num_windows), desc="Windowing", leave=False, ncols=80):
+        for i in tqdm(range(num_windows), desc="Windowing", leave=False, ncols=80, disable=True):
             result = WindowingResult()
             result.audio_path = audio_filepath
             result.window_st = start_offset + i * hop_size
@@ -242,7 +239,7 @@ class Windowing:
         windows_dict: dict[Path, dict[int, WindowingResult]] = {}
 
         # for audio_file in tqdm(audio_files, desc="Windowing audio files", leave=False, ncols=80):
-        for audio_file in audio_files:
+        for audio_file in tqdm(audio_files, desc="Windowing audio files", leave=False, ncols=80):
             label_file: Path
             if audio_file.with_suffix(".tsv").exists():
                 label_file = audio_file.with_suffix(".tsv")
