@@ -1,11 +1,12 @@
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional
+from typing import Literal
 
-import numpy as np
-from pydantic import BaseModel, Field
+from aspa.utils.base_dataclass import BaseDataClass
 
 
-class WindowingConfig(BaseModel):
+@dataclass
+class WindowingConfig(BaseDataClass):
     """Windowing configurations.
 
     Arguments:
@@ -16,7 +17,6 @@ class WindowingConfig(BaseModel):
         window_size: Window size in seconds.
         hop_size: Hop size in seconds.
         start_offset: Start offset in seconds.
-        drop_last: Whether to drop the last window if it is shorter than the window size.
         relative_ratio_threshold: Relative ratio threshold.
             If the relative ratio of the target audio is greater than this value, it will be considered as a target audio.
         absolute_ratio_threshold: Absolute ratio threshold.
@@ -29,28 +29,23 @@ class WindowingConfig(BaseModel):
             - "all": Include labeled and unlabeled data as others.
             - "none": Do not include others.
         others: Name of the others label. If there is no explicit others label, set it to None.
-        ignore_missing_label_files: Whether to ignore missing label files.
     """
 
     audio_folders: str | Path | list[str] | list[Path]
-    classes: list[str] = Field(default_factory=list)
-    similar_labels: dict[str, list[str]] = Field(default_factory=dict)
-    window_sec: float = 1.0
-    hop_sec: float = 0.5
-    start_offset_sec: float = 0.0
-    drop_last_window: bool = False
+    classes: list[str] = field(default_factory=list)
+    similar_labels: dict[str, list[str]] = field(default_factory=dict)
+    window_size: float = 1.0
+    hop_size: float = 0.5
+    start_offset: float = 0.0
     relative_ratio_threshold: float = 1.0
     absolute_ratio_threshold: float = 1.0
     target_sr: int = 32000
     include_others: Literal["lb", "ulb", "all", "none"] = "all"
-    exclude_labels: list[str] = Field(default_factory=list)
+    exclude_labels: list[str] = field(default_factory=list)
     others: str | None = None
-    ignore_missing_label_files: bool = False
-    label_file_finder: Optional[Callable[[Path], Path]] = None
-    label_line_parser: Optional[Callable[[str], tuple[str, str, str]]] = None
-    label_file_processor: Optional[Callable[[Path, Optional[Path]], np.ndarray]] = None
+    make_missing_label_files: bool = False
 
-    def model_post_init(self, context: Any) -> None:
+    def __post_init__(self) -> None:
         """Post initialization of the dataclass.
         This method is called after the dataclass is initialized.
 
@@ -67,7 +62,3 @@ class WindowingConfig(BaseModel):
 
         for k, v in self.similar_labels.items():
             self.similar_labels[k] = [str(element) for element in v]
-
-        self.window_size: int = int(self.window_sec * self.target_sr)
-        self.hop_size: int = int(self.hop_sec * self.target_sr)
-        self.start_offset: int = int(self.start_offset_sec * self.target_sr)
