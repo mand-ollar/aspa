@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import librosa
@@ -48,6 +49,7 @@ class Windowing:
             label_filepath: Path to the label file. In sample point unit.
         """
 
+        st_time: float = time.time()
         audio_length: int = int(librosa.get_duration(path=audio_filepath) * self.config.target_sr)
         audio_filepath = Path(audio_filepath)
 
@@ -101,6 +103,7 @@ class Windowing:
             audio_length += start_offset
 
         num_windows: int = (audio_length - window_size) // hop_size + 1
+        print(f"Time taken: {time.time() - st_time:.2f} seconds")
 
         result: WindowingResult
         windowed_results: dict[int, WindowingResult]
