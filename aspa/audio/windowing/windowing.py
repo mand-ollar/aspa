@@ -197,47 +197,63 @@ class Windowing:
                 window_en=self.config.start_offset + i * self.config.hop_size + self.config.window_size,
             )
 
-            skip_window: bool = False
-
-            # Get the indices of the labels that overlap with the window.
-            overlapped_mask: np.ndarray = np.logical_and(
-                labels[:, 0] < windowing_result.window_en,
-                labels[:, 1] > windowing_result.window_st,
-            )
-            masked_indices: np.ndarray = np.where(overlapped_mask)[0]
-
-            if not overlapped_mask.any():
+            if len(labels) == 0:
                 others = True
+
             else:
-                # Get relative ratio and absolute ratio of the overlapped labels.
-                overlapped_labels: np.ndarray = labels[overlapped_mask]
-                _overlap: np.ndarray = np.minimum(overlapped_labels[:, 1], windowing_result.window_en) - np.maximum(
-                    overlapped_labels[:, 0], windowing_result.window_st
+                skip_window: bool = False
+
+                # Get the indices of the labels that overlap with the window.
+                overlapped_mask: np.ndarray = np.logical_and(
+                    labels[:, 0] < windowing_result.window_en,
+                    labels[:, 1] > windowing_result.window_st,
                 )
-                relative_ratios: np.ndarray = _overlap / (windowing_result.window_en - windowing_result.window_st)
-                absolute_ratios: np.ndarray = _overlap / (overlapped_labels[:, 1] - overlapped_labels[:, 0])
+                masked_indices: np.ndarray = np.where(overlapped_mask)[0]
 
-                # Ratio thresholding
-                ratio_mask: np.ndarray = np.logical_or(
-                    relative_ratios >= self.config.relative_ratio_threshold,
-                    absolute_ratios >= self.config.absolute_ratio_threshold,
-                )
-                masked_indices = masked_indices[ratio_mask]
-                relative_ratios = relative_ratios[ratio_mask]
-                absolute_ratios = absolute_ratios[ratio_mask]
-                overlapped_labels = overlapped_labels[ratio_mask]
+                if not overlapped_mask.any():
+                    others = True
+                else:
+                    # Get relative ratio and absolute ratio of the overlapped labels.
+                    overlapped_labels: np.ndarray = labels[overlapped_mask]
+                    _overlap: np.ndarray = np.minimum(overlapped_labels[:, 1], windowing_result.window_en) - np.maximum(
+                        overlapped_labels[:, 0], windowing_result.window_st
+                    )
+                    relative_ratios: np.ndarray = _overlap / (windowing_result.window_en - windowing_result.window_st)
+                    absolute_ratios: np.ndarray = _overlap / (overlapped_labels[:, 1] - overlapped_labels[:, 0])
 
-                for j, relative_ratio, absolute_ratio, label_name in zip(
-                    masked_indices, relative_ratios, absolute_ratios, overlapped_labels[:, 2]
-                ):
-                    windowing_result.label_name.append(label_name)
-                    windowing_result.relative_ratio.append(relative_ratio)
-                    windowing_result.absolute_ratio.append(absolute_ratio)
-                    windowing_result.label_id.append(j)
+                    # Ratio thresholding
+                    ratio_mask: np.ndarray = np.logical_or(
+                        relative_ratios >= self.config.relative_ratio_threshold,
+                        absolute_ratios >= self.config.absolute_ratio_threshold,
+                    )
+                    masked_indices = masked_indices[ratio_mask]
+                    relative_ratios = relative_ratios[ratio_mask]
+                    absolute_ratios = absolute_ratios[ratio_mask]
+                    overlapped_labels = overlapped_labels[ratio_mask]
 
-                    found: bool = False
-                    for iv_label_name, similars in self.config.similar_labels.items():
-                        if label_name in similars:
+                    for j, relative_ratio, absolute_ratio, label_name in zip(
+                        masked_indices, relative_ratios, absolute_ratios, overlapped_labels[:, 2]
+                    ):
+                        windowing_result.label_name.append(label_name)
+                        windowing_result.relative_ratio.append(relative_ratio)
+                        windowing_result.absolute_ratio.append(absolute_ratio)
+                        windowing_result.label_id.append(j)
+
+                        found: bool = False
+                        for iv_label_name, similars in self.config.similar_labels.items():
+                            if label_name in similars:
+                                # Check exclude labels
+                                if label_name in self.config.exclude_labels:
+                                    skip_window = True
+                                    if label_name not in self.excluded_labels:
+                                        self.excluded_labels.append(label_name)
+                                    break
+
+                                windowing_result.iv_name.append(iv_label_name)
+                                found = True
+                                break
+
+                        if not found:
                             # Check exclude labels
                             if label_name in self.config.exclude_labels:
                                 skip_window = True
@@ -245,30 +261,18 @@ class Windowing:
                                     self.excluded_labels.append(label_name)
                                 break
 
-                            windowing_result.iv_name.append(iv_label_name)
-                            found = True
-                            break
+                            # Not found from the similar labels, add as others
+                            windowing_result.iv_name.append(self.config.others)
+                            others = True
 
-                    if not found:
-                        # Check exclude labels
-                        if label_name in self.config.exclude_labels:
-                            skip_window = True
-                            if label_name not in self.excluded_labels:
-                                self.excluded_labels.append(label_name)
-                            break
-
-                        # Not found from the similar labels, add as others
-                        windowing_result.iv_name.append(self.config.others)
-                        others = True
-
-                    if (
-                        not found
-                        and label_name not in self.oov_list
-                        and label_name not in list(self.config.similar_labels.keys())
-                    ):
-                        if verbose:
-                            print(f"Considering\n{label_name}\nas others.\n")
-                        self.oov_list.append(label_name)
+                        if (
+                            not found
+                            and label_name not in self.oov_list
+                            and label_name not in list(self.config.similar_labels.keys())
+                        ):
+                            if verbose:
+                                print(f"Considering\n{label_name}\nas others.\n")
+                            self.oov_list.append(label_name)
 
                 # If exclude label is found
                 if skip_window:
