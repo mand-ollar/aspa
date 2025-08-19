@@ -35,13 +35,16 @@ class WindowingConfig(BaseModel):
     audio_folders: str | Path | list[str] | list[Path]
     classes: list[str] = Field(default_factory=list)
     similar_labels: dict[str, list[str]] = Field(default_factory=dict)
+    target_sr: int = 32000
     window_sec: float = 1.0
     hop_sec: float = 0.5
     start_offset_sec: float = 0.0
+    window_size: int = int(window_sec * target_sr)
+    hop_size: int = int(hop_sec * target_sr)
+    start_offset: int = int(start_offset_sec * target_sr)
     drop_last_window: bool = False
     relative_ratio_threshold: float = 1.0
     absolute_ratio_threshold: float = 1.0
-    target_sr: int = 32000
     include_others: Literal["lb", "ulb", "all", "none"] = "all"
     exclude_labels: list[str] = Field(default_factory=list)
     others: str | None = None
@@ -67,7 +70,3 @@ class WindowingConfig(BaseModel):
 
         for k, v in self.similar_labels.items():
             self.similar_labels[k] = [str(element) for element in v]
-
-        self.window_size: int = int(self.window_sec * self.target_sr)
-        self.hop_size: int = int(self.hop_sec * self.target_sr)
-        self.start_offset: int = int(self.start_offset_sec * self.target_sr)
