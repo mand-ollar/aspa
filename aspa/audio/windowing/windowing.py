@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 from types import MethodType
 from typing import Optional
@@ -172,10 +173,12 @@ class Windowing:
         return False
 
     def _windowing(self, audio_path: Path, verbose: bool = False) -> dict[int, WindowingResult]:
+        st: float = time.time()
         audio_length: int = int(get_duration_sec(filepath=audio_path) * self.config.target_sr)
         _label_path: Path = self._get_label_file_for_audio(audio_path=audio_path)
         labels: np.ndarray = self._get_labels_for_audio(audio_path=audio_path, label_path=_label_path)
         num_windows: int = self._num_windows(audio_length=audio_length)
+        print(f"Time taken: {time.time() - st:.2f} seconds")
 
         # If the audio is slightly longer than the window size,
         # and the target audio is shorter than the window size,
