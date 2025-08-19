@@ -6,6 +6,7 @@ import numpy as np
 from rich.progress import track
 
 from .config import WindowingConfig
+from .dataset import WindowingDataset
 from .types import WindowingResult
 from .utils import get_duration_sec
 
@@ -313,3 +314,8 @@ class Windowing:
         print()
 
         return windows_dict
+
+    def get_dataset(self, classes: list[str] | None = None) -> WindowingDataset:
+        windows_dict: dict[Path, dict[int, WindowingResult]] = self.get_windows()
+
+        return WindowingDataset(config=self.config, windows_dict=windows_dict, classes=classes)
