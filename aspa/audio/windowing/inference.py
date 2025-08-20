@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 
 import torch
@@ -6,6 +7,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from .dataset import WindowingDataset
+
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="multiprocessing")
 
 
 class ModelInference(ABC):

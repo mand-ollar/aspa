@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 import torch
@@ -10,6 +11,8 @@ from aspa.utils.audio.format_audio import format_audio
 from .config import WindowingConfig
 from .types import WindowingResult
 from .utils import OneItemCache, pad_audio
+
+warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
 
 
 class WindowingDataset(Dataset):
