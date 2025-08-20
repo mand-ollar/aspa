@@ -8,8 +8,6 @@ from tqdm import tqdm
 
 from .dataset import WindowingDataset
 
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="multiprocessing")
-
 
 class ModelInference(ABC):
     def __init__(
@@ -20,6 +18,8 @@ class ModelInference(ABC):
         batch_size: int,
         num_workers: int,
     ) -> None:
+        warnings.filterwarnings("ignore", category=DeprecationWarning, module="multiprocessing")
+
         self.model: nn.Module = model
         self.dataset: WindowingDataset = dataset
         self.device: str | torch.device = device

@@ -12,8 +12,6 @@ from .config import WindowingConfig
 from .types import WindowingResult
 from .utils import OneItemCache, pad_audio
 
-warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
-
 
 class WindowingDataset(Dataset):
     def __init__(
@@ -22,6 +20,8 @@ class WindowingDataset(Dataset):
         windows_dict: dict[Path, dict[int, WindowingResult]],
         classes: list[str] | None = None,
     ) -> None:
+        warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
+
         self.config: WindowingConfig = config
         self.windows_dict: dict[Path, dict[int, WindowingResult]] = windows_dict
         self.classes: list[str] = classes or config.classes
