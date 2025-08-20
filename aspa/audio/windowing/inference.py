@@ -25,12 +25,12 @@ class ModelInference(ABC):
         self.num_workers: int = num_workers
 
     @abstractmethod
-    @torch.no_grad()
     def forward(self, x: torch.Tensor) -> torch.Tensor: ...
 
     @abstractmethod
     def filter(self, logits: torch.Tensor) -> torch.Tensor: ...
 
+    @torch.no_grad()
     def __call__(self) -> torch.Tensor:
         dataloader: DataLoader = DataLoader(
             dataset=self.dataset,

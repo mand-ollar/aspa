@@ -124,12 +124,30 @@ class Windowing:
 
         return (audio_length - self.config.window_size) // self.config.hop_size + int(not self.config.drop_last_window)
 
+    def _others_decision(self, result: WindowingResult) -> bool:
+        if self.config.include_others == "lb":
+            if result.label_name:
+                return True
+        elif self.config.include_others == "ulb":
+            if not result.label_name:
+                return True
+        elif self.config.include_others == "all":
+            return True
+        elif self.config.include_others == "none":
+            return False
+        else:
+            raise ValueError(f"Invalid include_others value: {self.config.include_others}")
+
+        return False
+
     def _windowing_for_single_audio(
         self, audio_path: Path, labels: list[tuple[int, int, str]]
     ) -> dict[int, WindowingResult] | None:
         st_int: int
         en_int: int
         label_name: str
+
+        audio_length: int = int(get_duration_sec(filepath=audio_path) * self.config.target_sr)
 
         st_int, en_int, label_name = labels[0]
 
@@ -146,8 +164,11 @@ class Windowing:
             if found:
                 result: WindowingResult = WindowingResult(
                     audio_path=audio_path,
-                    window_st=(en_int + st_int) // 2 - self.config.window_size // 2,
-                    window_en=(en_int + st_int) // 2 - self.config.window_size // 2 + self.config.window_size,
+                    window_st=max((en_int + st_int) // 2 - self.config.window_size // 2, 0),
+                    window_en=min(
+                        (en_int + st_int) // 2 - self.config.window_size // 2 + self.config.window_size,
+                        audio_length,
+                    ),
                     iv_name=[iv_label_name],
                     label_name=[label_name],
                     relative_ratio=[1.0],
@@ -158,22 +179,6 @@ class Windowing:
                 return {0: result}
 
         return None
-
-    def _others_decision(self, result: WindowingResult) -> bool:
-        if self.config.include_others == "lb":
-            if result.label_name:
-                return True
-        elif self.config.include_others == "ulb":
-            if not result.label_name:
-                return True
-        elif self.config.include_others == "all":
-            return True
-        elif self.config.include_others == "none":
-            return False
-        else:
-            raise ValueError(f"Invalid include_others value: {self.config.include_others}")
-
-        return False
 
     def _windowing_for_large_labels(
         self,
