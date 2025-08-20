@@ -33,6 +33,7 @@ class WindowingConfig(BaseModel):
     """
 
     audio_folders: str | Path | list[str] | list[Path]
+    audio_format: Literal["wav", "mp3", "ogg", "flac"] = "wav"
     classes: list[str] = Field(default_factory=list)
     similar_labels: dict[str, list[str]] = Field(default_factory=dict)
     target_sr: int = 32000
