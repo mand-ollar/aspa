@@ -67,6 +67,8 @@ class WindowingDataset(Dataset):
 
 class IndexedWindowingDataset:
     def __init__(self, dataset: "WindowingDataset | IndexedWindowingDataset", indices: list[int]) -> None:
+        warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
+
         self.dataset: WindowingDataset | IndexedWindowingDataset = dataset
         self.indices: list[int] = indices
 
