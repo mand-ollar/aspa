@@ -209,27 +209,29 @@ class Windowing:
                 skip_window: bool = False
 
                 # Get the indices of the labels that overlap with the window.
-                overlapped_mask: np.ndarray = np.logical_and(
-                    labels[:, 0] < windowing_result.window_en,
-                    labels[:, 1] > windowing_result.window_st,
+                overlapped_mask: np.ndarray = (labels[:, 0] < windowing_result.window_en) & (
+                    labels[:, 1] > windowing_result.window_st
                 )
-                masked_indices: np.ndarray = np.where(overlapped_mask)[0]
+                masked_indices: np.ndarray = np.flatnonzero(overlapped_mask)
 
                 if not overlapped_mask.any():
                     others = True
                 else:
                     # Get relative ratio and absolute ratio of the overlapped labels.
                     overlapped_labels: np.ndarray = labels[overlapped_mask]
-                    _overlap: np.ndarray = np.minimum(overlapped_labels[:, 1], windowing_result.window_en) - np.maximum(
-                        overlapped_labels[:, 0], windowing_result.window_st
-                    )
-                    relative_ratios: np.ndarray = _overlap / (windowing_result.window_en - windowing_result.window_st)
-                    absolute_ratios: np.ndarray = _overlap / (overlapped_labels[:, 1] - overlapped_labels[:, 0])
+
+                    _overlap_ends: np.ndarray = np.minimum(overlapped_labels[:, 1], windowing_result.window_en)
+                    _overlap_starts: np.ndarray = np.maximum(overlapped_labels[:, 0], windowing_result.window_st)
+                    _overlap: np.ndarray = _overlap_ends - _overlap_starts
+
+                    window_size: int = windowing_result.window_en - windowing_result.window_st
+                    label_size: np.ndarray = overlapped_labels[:, 1] - overlapped_labels[:, 0]
+                    relative_ratios: np.ndarray = _overlap / window_size
+                    absolute_ratios: np.ndarray = _overlap / label_size
 
                     # Ratio thresholding
-                    ratio_mask: np.ndarray = np.logical_or(
-                        relative_ratios >= self.config.relative_ratio_threshold,
-                        absolute_ratios >= self.config.absolute_ratio_threshold,
+                    ratio_mask: np.ndarray = (relative_ratios >= self.config.relative_ratio_threshold) | (
+                        absolute_ratios >= self.config.absolute_ratio_threshold
                     )
                     masked_indices = masked_indices[ratio_mask]
                     relative_ratios = relative_ratios[ratio_mask]
