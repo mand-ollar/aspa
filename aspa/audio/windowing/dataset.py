@@ -51,7 +51,7 @@ class WindowingDataset(Dataset):
         if audio_path in self.cache_audio:
             audio = self.cache_audio[audio_path]
         else:
-            audio, sr = torchaudio.load(uri=audio_path)
+            audio, sr = torchaudio.load(uri=str(audio_path))
             audio = format_audio(audio=audio, sr=sr, new_sr=self.config.target_sr, target_dim=2)
             self.cache_audio[audio_path] = audio
 
