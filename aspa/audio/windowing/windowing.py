@@ -68,7 +68,7 @@ class Windowing:
 
         return st, en, label_name
 
-    def _get_labels_for_audio(self, audio_path: Path, label_path: Optional[Path] = None) -> np.ndarray:
+    def _get_labels_for_audio(self, audio_path: Path, label_path: Optional[Path] = None) -> list[tuple[int, int, str]]:
         if label_path is None:
             raise NotImplementedError
 
@@ -82,7 +82,7 @@ class Windowing:
             except ValueError:
                 is_pnt_unit = True
 
-            split_labels: list[list[int | str]] = []
+            split_labels: list[tuple[int, int, str]] = []
 
             for label in labels:
                 if label == "":
@@ -101,15 +101,15 @@ class Windowing:
                     continue
 
                 if is_pnt_unit:
-                    split_labels.append([int(st_number), int(en_number), label_name])
+                    split_labels.append((int(st_number), int(en_number), label_name))
                 else:
-                    split_labels.append([
+                    split_labels.append((
                         int(st_number * self.config.target_sr),
                         int(en_number * self.config.target_sr),
                         label_name,
-                    ])
+                    ))
 
-        return np.array(split_labels, dtype=[("start", "i4"), ("end", "i4"), ("label", "U50")])
+        return split_labels
 
     def _num_windows(self, audio_length: int) -> int:
         # If the audio is shorter than the window size, pad the audio to the window size.
@@ -122,7 +122,9 @@ class Windowing:
 
         return (audio_length - self.config.window_size) // self.config.hop_size + int(not self.config.drop_last_window)
 
-    def _windowing_for_single_audio(self, audio_path: Path, labels: np.ndarray) -> dict[int, WindowingResult] | None:
+    def _windowing_for_single_audio(
+        self, audio_path: Path, labels: list[tuple[int, int, str]]
+    ) -> dict[int, WindowingResult] | None:
         st_int: int
         en_int: int
         label_name: str
@@ -171,137 +173,254 @@ class Windowing:
 
         return False
 
+    def _windowing_for_large_labels(
+        self,
+        audio_path: Path,
+        labels: list[tuple[int, int, str]],
+        num_windows: int,
+        show_progress: bool,
+        verbose: bool,
+    ) -> dict[int, WindowingResult]:
+        return {}
+
+    def _windowing_for_small_labels(
+        self,
+        audio_path: Path,
+        labels: list[tuple[int, int, str]],
+        num_windows: int,
+        show_progress: bool,
+        verbose: bool,
+    ) -> dict[int, WindowingResult]:
+        cnt: int = 0
+        windowed_results: dict[int, WindowingResult] = {}
+
+        n_labels: int = len(labels)
+
+        st_sorted_labels: list[tuple[int, int, str]] = sorted(labels, key=lambda x: x[0])
+        en_sorted_labels: list[tuple[int, int, str]] = sorted(labels, key=lambda x: x[1])
+        min_st: int = st_sorted_labels[0][0]
+        max_en: int = en_sorted_labels[0][1]
+
+        iterator_dict: dict[Literal["start", "end"], list[tuple[int, tuple[int, int, str]]]] = {
+            "start": list(enumerate(st_sorted_labels)),
+            "end": list(enumerate(en_sorted_labels))[::-1],
+        }
+
+        for i in track(range(num_windows), description="Windowing", transient=True, disable=not show_progress):
+            others: bool = False
+            skip_window: bool = False
+
+            result: WindowingResult = WindowingResult(
+                audio_path=audio_path,
+                window_st=self.config.start_offset + i * self.config.hop_size,
+                window_en=self.config.start_offset + i * self.config.hop_size + self.config.window_size,
+            )
+
+            # No labels or the window is out of the label range,
+            # and if including others "all" or "ulb", add the window and continue.
+            if self.config.include_others in ["all", "ulb"] and (
+                n_labels == 0 or min_st > result.window_en or max_en < result.window_st
+            ):
+                windowed_results[cnt] = result
+                cnt += 1
+                continue
+
+            # Decide whether to start from the start or the end.
+            iterator_mode: Literal["start", "end"]
+            if abs(result.window_st - min_st) < abs(result.window_en - max_en):
+                iterator_mode = "start"
+            else:
+                iterator_mode = "end"
+
+            for j, (st_int, en_int, label_name) in iterator_dict[iterator_mode]:
+                # If there's no chance to overlap with the window, break the loop.
+                if iterator_mode == "start" and st_int > result.window_en:
+                    break
+                elif iterator_mode == "end" and en_int < result.window_st:
+                    break
+
+                if st_int < result.window_en and en_int > result.window_st:
+                    # No matter how much the ratio is, if the label is in the exclude labels, skip the window.
+                    if label_name in self.config.exclude_labels:
+                        if label_name not in self.excluded_labels:
+                            self.excluded_labels.append(label_name)
+                        skip_window = True
+                        break
+
+                    overlap: float = min(en_int, result.window_en) - max(st_int, result.window_st)
+                    relative_ratio: float = overlap / self.config.window_size
+                    absolute_ratio: float = overlap / (en_int - st_int)
+
+                    result.label_name.append(label_name)
+                    result.relative_ratio.append(relative_ratio)
+                    result.absolute_ratio.append(absolute_ratio)
+                    result.label_id.append(j)
+
+                    found: bool = False
+                    for iv_label_name, similars in self.config.similar_labels.items():
+                        if label_name in similars:
+                            if (
+                                relative_ratio >= self.config.relative_ratio_threshold
+                                or absolute_ratio >= self.config.absolute_ratio_threshold
+                            ):
+                                found = True
+                                break
+
+                    if found:
+                        result.iv_name.append(iv_label_name)
+                    else:
+                        others = True
+                        result.iv_name.append(self.config.others)
+                        if label_name not in self.oov_list:
+                            if verbose:
+                                print(f"Considering\n{label_name}\nas others.\n")
+                            self.oov_list.append(label_name)
+
+            # After the label loop.
+            if skip_window or (others and not self._others_decision(result=result)):
+                continue
+
+            windowed_results[cnt] = result
+            cnt += 1
+
+        return windowed_results
+
     def _windowing(
         self,
         audio_path: Path,
         verbose: bool = False,
-        progress: bool = True,
+        show_progress: bool = True,
     ) -> dict[int, WindowingResult]:
-        audio_length: int = int(get_duration_sec(filepath=audio_path) * self.config.target_sr)
         _label_path: Path = self._get_label_file_for_audio(audio_path=audio_path)
-        labels: np.ndarray = self._get_labels_for_audio(audio_path=audio_path, label_path=_label_path)
+        labels = self._get_labels_for_audio(audio_path=audio_path, label_path=_label_path)
+
+        audio_length: int = int(get_duration_sec(filepath=audio_path) * self.config.target_sr)
         num_windows: int = self._num_windows(audio_length=audio_length)
 
         # If the audio is slightly longer than the window size,
         # and the target audio is shorter than the window size,
         # place the target audio in the middle and make the window.
         # Only for target audio.
-        if len(labels) == 1 and self.config.window_size < audio_length < self.config.window_size * 3:
+        if len(labels) == 1 and self.config.window_size < audio_length < self.config.window_size * 2:
             if (result := self._windowing_for_single_audio(audio_path=audio_path, labels=labels)) is not None:
                 return result
 
-        windowed_results: dict[int, WindowingResult] = {}
-        cnt: int = 0
-
-        for i in track(range(num_windows), description="Windowing", transient=True, disable=not progress):
-            others: bool = False
-
-            windowing_result: WindowingResult = WindowingResult(
+        if len(labels) > 1000:
+            return self._windowing_for_large_labels(
                 audio_path=audio_path,
-                window_st=self.config.start_offset + i * self.config.hop_size,
-                window_en=self.config.start_offset + i * self.config.hop_size + self.config.window_size,
+                labels=labels,
+                num_windows=num_windows,
+                show_progress=show_progress,
+                verbose=verbose,
+            )
+        else:
+            return self._windowing_for_small_labels(
+                audio_path=audio_path,
+                labels=labels,
+                num_windows=num_windows,
+                show_progress=show_progress,
+                verbose=verbose,
             )
 
-            if len(labels) == 0:
-                others = True
+        # windowed_results: dict[int, WindowingResult] = {}
 
-            else:
-                skip_window: bool = False
+        # cnt: int = 0
 
-                # Get the indices of the labels that overlap with the window.
-                overlapped_mask: np.ndarray = (labels["start"] < windowing_result.window_en) & (
-                    labels["end"] > windowing_result.window_st
-                )
-                masked_indices: np.ndarray = np.flatnonzero(overlapped_mask)
+        # for i in track(range(num_windows), description="Windowing", transient=True, disable=not progress):
+        #     others: bool = False
 
-                if not overlapped_mask.any():
-                    others = True
-                else:
-                    # Get relative ratio and absolute ratio of the overlapped labels.
-                    overlapped_labels: np.ndarray = labels[overlapped_mask]
+        #     windowing_result: WindowingResult = WindowingResult(
+        #         audio_path=audio_path,
+        #         window_st=self.config.start_offset + i * self.config.hop_size,
+        #         window_en=self.config.start_offset + i * self.config.hop_size + self.config.window_size,
+        #     )
 
-                    _overlap_ends: np.ndarray = np.minimum(overlapped_labels["end"], windowing_result.window_en)
-                    _overlap_starts: np.ndarray = np.maximum(overlapped_labels["start"], windowing_result.window_st)
-                    _overlap: np.ndarray = _overlap_ends - _overlap_starts
+        #     if len(labels) == 0:
+        #         others = True
 
-                    window_size: int = windowing_result.window_en - windowing_result.window_st
-                    label_size: np.ndarray = overlapped_labels["end"] - overlapped_labels["start"]
-                    relative_ratios: np.ndarray = _overlap / window_size
-                    absolute_ratios: np.ndarray = _overlap / label_size
+        #     else:
+        #         skip_window: bool = False
 
-                    # Ratio thresholding
-                    ratio_mask: np.ndarray = (relative_ratios >= self.config.relative_ratio_threshold) | (
-                        absolute_ratios >= self.config.absolute_ratio_threshold
-                    )
-                    masked_indices = masked_indices[ratio_mask]
-                    relative_ratios = relative_ratios[ratio_mask]
-                    absolute_ratios = absolute_ratios[ratio_mask]
-                    overlapped_labels = overlapped_labels[ratio_mask]
+        #         # Get the indices of the labels that overlap with the window.
+        #         overlapped_mask: np.ndarray = (labels[:, 0] < windowing_result.window_en) & (
+        #             labels[:, 1] > windowing_result.window_st
+        #         )
+        #         masked_indices: np.ndarray = np.flatnonzero(overlapped_mask)
 
-                    for j, relative_ratio, absolute_ratio, label_name in zip(
-                        masked_indices, relative_ratios, absolute_ratios, overlapped_labels["label"]
-                    ):
-                        windowing_result.label_name.append(label_name)
-                        windowing_result.relative_ratio.append(relative_ratio)
-                        windowing_result.absolute_ratio.append(absolute_ratio)
-                        windowing_result.label_id.append(j)
+        #         if not overlapped_mask.any():
+        #             others = True
+        #         else:
+        #             # Get relative ratio and absolute ratio of the overlapped labels.
+        #             overlapped_labels: np.ndarray = labels[overlapped_mask]
 
-                        found: bool = False
-                        for iv_label_name, similars in self.config.similar_labels.items():
-                            if label_name in similars:
-                                # Check exclude labels
-                                if label_name in self.config.exclude_labels:
-                                    skip_window = True
-                                    if label_name not in self.excluded_labels:
-                                        self.excluded_labels.append(label_name)
-                                    break
+        #             _overlap_ends: np.ndarray = np.minimum(overlapped_labels["end"], windowing_result.window_en)
+        #             _overlap_starts: np.ndarray = np.maximum(overlapped_labels["start"], windowing_result.window_st)
+        #             _overlap: np.ndarray = _overlap_ends - _overlap_starts
 
-                                windowing_result.iv_name.append(iv_label_name)
-                                found = True
-                                break
+        #             window_size: int = windowing_result.window_en - windowing_result.window_st
+        #             label_size: np.ndarray = overlapped_labels["end"] - overlapped_labels["start"]
+        #             relative_ratios: np.ndarray = _overlap / window_size
+        #             absolute_ratios: np.ndarray = _overlap / label_size
 
-                        if not found:
-                            # Check exclude labels
-                            if label_name in self.config.exclude_labels:
-                                skip_window = True
-                                if label_name not in self.excluded_labels:
-                                    self.excluded_labels.append(label_name)
-                                break
+        #             # Ratio thresholding
+        #             ratio_mask: np.ndarray = (relative_ratios >= self.config.relative_ratio_threshold) | (
+        #                 absolute_ratios >= self.config.absolute_ratio_threshold
+        #             )
+        #             masked_indices = masked_indices[ratio_mask]
+        #             relative_ratios = relative_ratios[ratio_mask]
+        #             absolute_ratios = absolute_ratios[ratio_mask]
+        #             overlapped_labels = overlapped_labels[ratio_mask]
 
-                            # Not found from the similar labels, add as others
-                            windowing_result.iv_name.append(self.config.others)
-                            others = True
+        #             for j, relative_ratio, absolute_ratio, label_name in zip(
+        #                 masked_indices, relative_ratios, absolute_ratios, overlapped_labels["label"]
+        #             ):
+        #                 if label_name in self.config.exclude_labels:
+        #                     if label_name not in self.excluded_labels:
+        #                         self.excluded_labels.append(label_name)
+        #                     continue
 
-                        if (
-                            not found
-                            and label_name not in self.oov_list
-                            and label_name not in list(self.config.similar_labels.keys())
-                        ):
-                            if verbose:
-                                print(f"Considering\n{label_name}\nas others.\n")
-                            self.oov_list.append(label_name)
+        #                 windowing_result.label_name.append(label_name)
+        #                 windowing_result.relative_ratio.append(relative_ratio)
+        #                 windowing_result.absolute_ratio.append(absolute_ratio)
+        #                 windowing_result.label_id.append(j)
 
-                # If exclude label is found
-                if skip_window:
-                    continue
+        #                 found: bool = False
+        #                 for iv_label_name, similars in self.config.similar_labels.items():
+        #                     if label_name in similars:
+        #                         found = True
+        #                         windowing_result.iv_name.append(iv_label_name)
+        #                         break
 
-            assert (
-                len(windowing_result.label_name)
-                == len(windowing_result.relative_ratio)
-                == len(windowing_result.absolute_ratio)
-                == len(windowing_result.label_id)
-            ), "Window information must be added for every key."
+        #                 if not found:
+        #                     windowing_result.iv_name.append(self.config.others)
+        #                     others = True
 
-            if others and not self._others_decision(result=windowing_result):
-                continue
+        #                     if label_name not in self.oov_list:
+        #                         if verbose:
+        #                             print(f"Considering\n{label_name}\nas others.\n")
+        #                         self.oov_list.append(label_name)
 
-            windowed_results[cnt] = windowing_result
-            cnt += 1
+        #         # If exclude label is found
+        #         if skip_window:
+        #             continue
 
-        return windowed_results
+        #     assert (
+        #         len(windowing_result.label_name)
+        #         == len(windowing_result.relative_ratio)
+        #         == len(windowing_result.absolute_ratio)
+        #         == len(windowing_result.label_id)
+        #     ), "Window information must be added for every key."
+
+        #     if others and not self._others_decision(result=windowing_result):
+        #         continue
+
+        #     windowed_results[cnt] = windowing_result
+        #     cnt += 1
+
+        # return windowed_results
 
     def get_windows(
-        self, verbose: bool = False, progress: Literal["overall", "each"] = "overall"
+        self, verbose: bool = False, show_progress: Literal["overall", "each"] = "overall"
     ) -> dict[Path, dict[int, WindowingResult]]:
         """
         Window the audio files and save as wav files in the folder.
@@ -316,10 +435,10 @@ class Windowing:
         windows_dict: dict[Path, dict[int, WindowingResult]] = {}
 
         for audio_path in track(
-            audio_paths, description="Windowing Progress", transient=True, disable=(progress != "overall")
+            audio_paths, description="Windowing Progress", transient=True, disable=(show_progress != "overall")
         ):
             windows_dict[audio_path] = self._windowing(
-                audio_path=audio_path, verbose=verbose, progress=(progress == "each")
+                audio_path=audio_path, verbose=verbose, show_progress=(show_progress == "each")
             )
 
         print("Windowing oov list:")
