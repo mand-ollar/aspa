@@ -26,11 +26,17 @@ class WindowingDataset(Dataset):
             "classes in the windowing result must be included in the classes argument."
         )
 
-        self.labels_list: list[torch.Tensor] = []
+        self.labels: list[torch.Tensor] = []
         self.windowing_results: list[tuple[Path, WindowingResult]] = []
         for audio_path, windows in self.windows_dict.items():
             for window in windows.values():
+                windowed_label: torch.Tensor = torch.zeros(len(self.classes), dtype=torch.float32)
+                for label_name in window.iv_name:
+                    if label_name is not None and label_name in self.classes:
+                        windowed_label[self.classes.index(label_name)] = 1.0
+
                 self.windowing_results.append((audio_path, window))
+                self.labels.append(windowed_label)
 
         self.cache_audio: dict[Path, torch.Tensor] = OneItemCache()
 
@@ -49,9 +55,22 @@ class WindowingDataset(Dataset):
             self.cache_audio[audio_path] = audio
 
         windowed_audio: torch.Tensor = audio[:, windowing_result.window_st : windowing_result.window_en]
-        windowed_label: torch.Tensor = torch.zeros(len(self.classes), dtype=torch.float32)
-        for label_name in windowing_result.iv_name:
-            if label_name is not None:
-                windowed_label[self.classes.index(label_name)] = 1.0
+        windowed_label: torch.Tensor = self.labels[idx]
 
         return windowed_audio, windowed_label
+
+
+class IndexedWindowingDataset:
+    def __init__(self, dataset: "WindowingDataset | IndexedWindowingDataset", indices: list[int]) -> None:
+        self.dataset: WindowingDataset | IndexedWindowingDataset = dataset
+        self.indices: list[int] = indices
+
+        self.classes: list[str] = dataset.classes
+        self.labels: list[torch.Tensor] = [dataset.labels[i] for i in indices]
+        self.windowing_results: list[tuple[Path, WindowingResult]] = [dataset.windowing_results[i] for i in indices]
+
+    def __len__(self) -> int:
+        return len(self.indices)
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        return self.dataset[self.indices[idx]]

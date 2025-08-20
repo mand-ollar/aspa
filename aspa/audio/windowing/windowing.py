@@ -3,10 +3,12 @@ from types import MethodType
 from typing import Literal, Optional
 
 import numpy as np
+import torch
+from sklearn.model_selection import StratifiedGroupKFold  # type: ignore
 from tqdm import tqdm
 
 from .config import WindowingConfig
-from .dataset import WindowingDataset
+from .dataset import IndexedWindowingDataset, WindowingDataset
 from .types import WindowingResult
 from .utils import get_duration_sec
 
@@ -436,3 +438,38 @@ class Windowing:
         windows_dict: dict[Path, dict[int, WindowingResult]] = self.get_windows()
 
         return WindowingDataset(config=self.config, windows_dict=windows_dict, classes=classes)
+
+    def get_stratified_grouped_split_dataset(
+        self,
+        dataset: WindowingDataset | IndexedWindowingDataset,
+        n_splits: int,
+        classes: list[str] | None = None,
+        seed: int = 42,
+    ) -> dict[str, IndexedWindowingDataset]:
+        x: np.ndarray = np.zeros((len(dataset),))
+
+        group_paths: list[Path] = [result[0] for result in dataset.windowing_results]
+        unique_group_paths: list[Path] = list(set(group_paths))
+        groups: np.ndarray = np.array([unique_group_paths.index(group_path) for group_path in group_paths])
+
+        labels_tensor: torch.Tensor = torch.cat(dataset.labels, dim=0)
+        labels: np.ndarray = (labels_tensor.sum(dim=-1) * labels_tensor.argmax(dim=-1)).numpy()
+
+        sgkf: StratifiedGroupKFold = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+        sgkf.get_n_splits(X=x, y=labels, groups=groups)
+
+        best_ratio: float = 0
+        for _, (train_idx, valid_idx) in enumerate(sgkf.split(X=x, y=labels, groups=groups)):
+            ratio: float = len(train_idx) / len(valid_idx)
+            if abs(ratio - n_splits + 1) > abs(best_ratio - n_splits + 1):
+                best_ratio = ratio
+                best_train_idx: list[int] = train_idx.tolist()
+                best_valid_idx: list[int] = valid_idx.tolist()
+
+        if best_ratio == 0:
+            raise ValueError("Check the dataset. There might be a problem on the split process.")
+
+        return {
+            "train": IndexedWindowingDataset(dataset=dataset, indices=best_train_idx),
+            "valid": IndexedWindowingDataset(dataset=dataset, indices=best_valid_idx),
+        }
