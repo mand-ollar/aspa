@@ -34,7 +34,7 @@ def pad_audio(audio: torch.Tensor, target_length: int, dim: int) -> torch.Tensor
         return audio
 
     elif audio.size(dim) < target_length:
-        pad_length: list[int] = [0 for _ in range(audio_dim)]
+        pad_length: list[int] = [0 for _ in range(audio_dim * 2)]
         pad_length[2 * dim + 1] = target_length - audio.size(dim)
         return torch.nn.functional.pad(input=audio, pad=pad_length, mode="constant", value=0)
     else:
