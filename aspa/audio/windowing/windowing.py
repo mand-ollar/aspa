@@ -383,7 +383,7 @@ class Windowing:
             if (result := self._windowing_for_single_audio(audio_path=audio_path, labels=labels)) is not None:
                 return result
 
-        if len(labels) > 0:
+        if len(labels) > 200:
             return self._windowing_for_large_labels(
                 audio_path=audio_path,
                 labels=labels,
