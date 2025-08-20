@@ -39,7 +39,7 @@ class Windowing:
         audio_files: list[Path] = []
         for audio_folder in self.audio_folders:
             if audio_folder.is_dir():
-                audio_files += list(audio_folder.rglob("*.wav"))
+                audio_files += list(audio_folder.rglob(f"*.{self.config.audio_format}"))
             elif audio_folder.is_file():
                 audio_files.append(audio_folder)
             else:
