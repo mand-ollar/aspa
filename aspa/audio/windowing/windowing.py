@@ -3,7 +3,7 @@ from types import MethodType
 from typing import Literal, Optional
 
 import numpy as np
-from rich.progress import track
+from tqdm import tqdm
 
 from .config import WindowingConfig
 from .dataset import WindowingDataset
@@ -206,7 +206,7 @@ class Windowing:
             "end": list(enumerate(en_sorted_labels))[::-1],
         }
 
-        for i in track(range(num_windows), description="Windowing", transient=True, disable=not show_progress):
+        for i in tqdm(range(num_windows), desc="Windowing", leave=False, ncols=80, disable=not show_progress):
             others: bool = False
             skip_window: bool = False
 
@@ -434,8 +434,8 @@ class Windowing:
         audio_paths: list[Path] = self._gather_audio_files()
         windows_dict: dict[Path, dict[int, WindowingResult]] = {}
 
-        for audio_path in track(
-            audio_paths, description="Windowing Progress", transient=True, disable=(show_progress != "overall")
+        for audio_path in tqdm(
+            audio_paths, desc="Windowing Progress", leave=False, disable=(show_progress != "overall"), ncols=80
         ):
             windows_dict[audio_path] = self._windowing(
                 audio_path=audio_path, verbose=verbose, show_progress=(show_progress == "each")
