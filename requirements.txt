@@ -13,6 +13,7 @@ setuptools
 soundfile
 torch
 torchaudio
+torchcodec
 torchvision
 tqdm
 types-pyaudio
