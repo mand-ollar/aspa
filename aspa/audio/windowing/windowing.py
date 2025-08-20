@@ -141,13 +141,11 @@ class Windowing:
         return False
 
     def _windowing_for_single_audio(
-        self, audio_path: Path, labels: list[tuple[int, int, str]]
+        self, audio_path: Path, labels: list[tuple[int, int, str]], audio_length: int
     ) -> dict[int, WindowingResult] | None:
         st_int: int
         en_int: int
         label_name: str
-
-        audio_length: int = int(get_duration_sec(filepath=audio_path) * self.config.target_sr)
 
         st_int, en_int, label_name = labels[0]
 
@@ -164,11 +162,13 @@ class Windowing:
             if found:
                 result: WindowingResult = WindowingResult(
                     audio_path=audio_path,
-                    window_st=max((en_int + st_int) // 2 - self.config.window_size // 2, 0),
-                    window_en=min(
-                        (en_int + st_int) // 2 - self.config.window_size // 2 + self.config.window_size,
-                        audio_length,
-                    ),
+                    # window_st=max((en_int + st_int) // 2 - self.config.window_size // 2, 0),
+                    # window_en=min(
+                    #     (en_int + st_int) // 2 - self.config.window_size // 2 + self.config.window_size,
+                    #     audio_length,
+                    # ),
+                    window_st=st_int,
+                    window_en=min(en_int, audio_length),
                     iv_name=[iv_label_name],
                     label_name=[label_name],
                     relative_ratio=[1.0],
@@ -387,7 +387,11 @@ class Windowing:
         # place the target audio in the middle and make the window.
         # Only for target audio.
         if len(labels) == 1 and self.config.window_size < audio_length < self.config.window_size * 2:
-            if (result := self._windowing_for_single_audio(audio_path=audio_path, labels=labels)) is not None:
+            if (
+                result := self._windowing_for_single_audio(
+                    audio_path=audio_path, labels=labels, audio_length=audio_length
+                )
+            ) is not None:
                 return result
 
         if len(labels) > 200:
