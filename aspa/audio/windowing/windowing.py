@@ -351,7 +351,7 @@ class Windowing:
                     else:
                         others = True
                         result.iv_name.append(self.config.others)
-                        if label_name not in self.oov_list:
+                        if label_name not in self.oov_list + list(self.config.similar_labels.keys()):
                             if verbose:
                                 print(f"Considering\n{label_name}\nas others.\n")
                             self.oov_list.append(label_name)
