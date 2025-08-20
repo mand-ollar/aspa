@@ -3,6 +3,7 @@ from pathlib import Path
 import torch
 import torchaudio  # type: ignore
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
 from aspa.utils.audio.format_audio import format_audio
 
@@ -28,7 +29,7 @@ class WindowingDataset(Dataset):
 
         self.labels: list[torch.Tensor] = []
         self.windowing_results: list[tuple[Path, WindowingResult]] = []
-        for audio_path, windows in self.windows_dict.items():
+        for audio_path, windows in tqdm(self.windows_dict.items(), desc="Windowing dataset", leave=False, ncols=80):
             for window in windows.values():
                 windowed_label: torch.Tensor = torch.zeros(len(self.classes), dtype=torch.float32)
                 for label_name in window.iv_name:

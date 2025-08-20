@@ -434,8 +434,15 @@ class Windowing:
 
         return windows_dict
 
-    def get_dataset(self, classes: list[str] | None = None) -> WindowingDataset:
-        windows_dict: dict[Path, dict[int, WindowingResult]] = self.get_windows()
+    def get_dataset(
+        self,
+        verbose: bool = False,
+        show_progress: Literal["overall", "each"] = "overall",
+        classes: list[str] | None = None,
+    ) -> WindowingDataset:
+        windows_dict: dict[Path, dict[int, WindowingResult]] = self.get_windows(
+            verbose=verbose, show_progress=show_progress
+        )
 
         return WindowingDataset(config=self.config, windows_dict=windows_dict, classes=classes)
 
