@@ -247,7 +247,7 @@ class Windowing:
                 else:
                     others = True
                     result.iv_name.append(self.config.others)
-                    if label_name not in self.oov_list:
+                    if label_name not in self.oov_list + list(self.config.similar_labels.keys()):
                         if verbose:
                             print(f"Considering\n{label_name}\nas others.\n")
                         self.oov_list.append(label_name)
@@ -383,7 +383,7 @@ class Windowing:
             if (result := self._windowing_for_single_audio(audio_path=audio_path, labels=labels)) is not None:
                 return result
 
-        if len(labels) > 200:
+        if len(labels) > 0:
             return self._windowing_for_large_labels(
                 audio_path=audio_path,
                 labels=labels,
