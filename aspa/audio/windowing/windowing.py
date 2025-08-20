@@ -186,7 +186,7 @@ class Windowing:
 
         n_labels: int = len(labels)
 
-        labels_np: np.ndarray = np.array(labels, dtype=[("start", "i4"), ("end", "i4"), ("label", "U100")])
+        labels_np: np.ndarray = np.array(labels, dtype=[("start", "i4"), ("end", "i4"), ("label", "S100")])
 
         for i in tqdm(range(num_windows), desc="Windowing", leave=False, ncols=80, disable=not show_progress):
             others: bool = False
@@ -383,7 +383,7 @@ class Windowing:
             if (result := self._windowing_for_single_audio(audio_path=audio_path, labels=labels)) is not None:
                 return result
 
-        if len(labels) > 0:
+        if len(labels) > 200:
             return self._windowing_for_large_labels(
                 audio_path=audio_path,
                 labels=labels,
