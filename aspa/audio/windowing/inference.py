@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from .dataset import WindowingDataset
 
@@ -42,7 +43,7 @@ class ModelInference(ABC):
 
         audio: torch.Tensor
         logits_list: list[torch.Tensor] = []
-        for audio, _ in dataloader:
+        for audio, _ in tqdm(dataloader, desc="Inference", leave=False, ncols=80):
             audio = audio.to(self.device)
             logits_list.append(self.forward(x=audio))
 
