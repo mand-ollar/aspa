@@ -220,7 +220,7 @@ class Windowing:
             for j, relative_ratio, absolute_ratio, label_name_np in zip(
                 overlapped_labels, relative_ratios, absolute_ratios, overlapped_labels["label"]
             ):
-                label_name: str = str(label_name_np)
+                label_name: str = label_name_np.decode("utf-8")
                 if label_name in self.config.exclude_labels:
                     if label_name not in self.excluded_labels:
                         self.excluded_labels.append(label_name)
