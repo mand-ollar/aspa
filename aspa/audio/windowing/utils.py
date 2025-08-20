@@ -25,3 +25,17 @@ def get_duration_sec(filepath: str | Path) -> float:
             return frames / rate
     else:
         return librosa.get_duration(path=str(filepath))
+
+
+def pad_audio(audio: torch.Tensor, target_length: int, dim: int) -> torch.Tensor:
+    audio_dim: int = audio.dim()
+
+    if audio.size(dim) == target_length:
+        return audio
+
+    elif audio.size(dim) < target_length:
+        pad_length: list[int] = [0 for _ in range(audio_dim)]
+        pad_length[2 * dim + 1] = target_length - audio.size(dim)
+        return torch.nn.functional.pad(input=audio, pad=pad_length, mode="constant", value=0)
+    else:
+        raise ValueError(f"Audio length {audio.size(dim)} is greater than the target length {target_length}.")
