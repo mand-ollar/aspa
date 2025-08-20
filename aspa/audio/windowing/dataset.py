@@ -3,7 +3,6 @@ from pathlib import Path
 
 import torch
 import torchaudio  # type: ignore
-import torchcodec  # type: ignore
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
@@ -55,10 +54,7 @@ class WindowingDataset(Dataset):
         if audio_path in self.cache_audio:
             audio = self.cache_audio[audio_path]
         else:
-            # audio, sr = torchaudio.load(uri=str(audio_path))
-            audio_data: torchcodec.AudioSamples = torchcodec.decoders.AudioDecoder(source=audio_path).get_all_samples()
-            audio = audio_data.data
-            sr: int = audio_data.sample_rate
+            audio, sr = torchaudio.load(uri=str(audio_path))
             audio = format_audio(audio=audio, sr=sr, new_sr=self.config.target_sr, target_dim=2)
             self.cache_audio[audio_path] = audio
 
