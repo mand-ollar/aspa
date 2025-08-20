@@ -109,7 +109,7 @@ class Windowing:
                         label_name,
                     ])
 
-        return np.array(split_labels, dtype=object)
+        return np.array(split_labels, dtype=[("start", "i4"), ("end", "i4"), ("label", "U50")])
 
     def _num_windows(self, audio_length: int) -> int:
         # If the audio is shorter than the window size, pad the audio to the window size.
@@ -209,8 +209,8 @@ class Windowing:
                 skip_window: bool = False
 
                 # Get the indices of the labels that overlap with the window.
-                overlapped_mask: np.ndarray = (labels[:, 0] < windowing_result.window_en) & (
-                    labels[:, 1] > windowing_result.window_st
+                overlapped_mask: np.ndarray = (labels["start"] < windowing_result.window_en) & (
+                    labels["end"] > windowing_result.window_st
                 )
                 masked_indices: np.ndarray = np.flatnonzero(overlapped_mask)
 
@@ -220,12 +220,12 @@ class Windowing:
                     # Get relative ratio and absolute ratio of the overlapped labels.
                     overlapped_labels: np.ndarray = labels[overlapped_mask]
 
-                    _overlap_ends: np.ndarray = np.minimum(overlapped_labels[:, 1], windowing_result.window_en)
-                    _overlap_starts: np.ndarray = np.maximum(overlapped_labels[:, 0], windowing_result.window_st)
+                    _overlap_ends: np.ndarray = np.minimum(overlapped_labels["end"], windowing_result.window_en)
+                    _overlap_starts: np.ndarray = np.maximum(overlapped_labels["start"], windowing_result.window_st)
                     _overlap: np.ndarray = _overlap_ends - _overlap_starts
 
                     window_size: int = windowing_result.window_en - windowing_result.window_st
-                    label_size: np.ndarray = overlapped_labels[:, 1] - overlapped_labels[:, 0]
+                    label_size: np.ndarray = overlapped_labels["end"] - overlapped_labels["start"]
                     relative_ratios: np.ndarray = _overlap / window_size
                     absolute_ratios: np.ndarray = _overlap / label_size
 
@@ -239,7 +239,7 @@ class Windowing:
                     overlapped_labels = overlapped_labels[ratio_mask]
 
                     for j, relative_ratio, absolute_ratio, label_name in zip(
-                        masked_indices, relative_ratios, absolute_ratios, overlapped_labels[:, 2]
+                        masked_indices, relative_ratios, absolute_ratios, overlapped_labels["label"]
                     ):
                         windowing_result.label_name.append(label_name)
                         windowing_result.relative_ratio.append(relative_ratio)
