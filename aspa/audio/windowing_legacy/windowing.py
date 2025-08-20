@@ -157,7 +157,14 @@ class Windowing:
                 min([split_label[0] for split_label in split_labels]) > result.window_en
                 or max([split_label[1] for split_label in split_labels]) < result.window_st
             ):
-                break
+                assert (
+                    len(result.iv_name)
+                    == len(result.label_name)
+                    == len(result.relative_ratio)
+                    == len(result.absolute_ratio)
+                ), "Window information must be added for every key."
+                windowed_results[cnt] = result
+                cnt += 1
 
             for j, (st_int, en_int, label_name) in enumerate(split_labels):
                 if st_int < result.window_en and en_int > result.window_st:  # Target overlapped with the window
