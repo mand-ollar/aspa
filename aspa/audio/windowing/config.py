@@ -74,3 +74,7 @@ class WindowingConfig(BaseModel):
 
         for k, v in self.similar_labels.items():
             self.similar_labels[k] = [str(element) for element in v]
+
+        self.window_size = int(self.window_sec * self.target_sr)
+        self.hop_size = int(self.hop_sec * self.target_sr)
+        self.start_offset = int(self.start_offset_sec * self.target_sr)
