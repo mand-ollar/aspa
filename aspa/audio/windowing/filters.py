@@ -14,8 +14,10 @@ from .dataset import BaseWindowingDataset
 
 
 class BaseFilter(ABC):
+    dataset: BaseWindowingDataset
+
     @abstractmethod
-    def apply(self) -> torch.Tensor:
+    def apply(self, dataset: BaseWindowingDataset) -> torch.Tensor:
         raise NotImplementedError
 
 
@@ -23,7 +25,6 @@ class ModelInferenceFilter(BaseFilter):
     def __init__(
         self,
         model: nn.Module,
-        dataset: BaseWindowingDataset,
         device: str | torch.device,
         batch_size: int,
         num_workers: int,
@@ -31,7 +32,6 @@ class ModelInferenceFilter(BaseFilter):
         warnings.filterwarnings("ignore", category=DeprecationWarning, module="multiprocessing")
 
         self.model: nn.Module = model
-        self.dataset: BaseWindowingDataset = dataset
         self.device: str | torch.device = device
         self.model.to(self.device).eval()
 
@@ -45,7 +45,9 @@ class ModelInferenceFilter(BaseFilter):
     def filter(self, logits: torch.Tensor) -> torch.Tensor: ...
 
     @torch.no_grad()
-    def apply(self) -> torch.Tensor:
+    def apply(self, dataset: BaseWindowingDataset) -> torch.Tensor:
+        self.dataset = dataset
+
         dataloader: DataLoader = DataLoader(
             dataset=self.dataset,
             batch_size=self.batch_size,
@@ -68,13 +70,11 @@ class ModelInferenceFilter(BaseFilter):
 class RMSFilter(BaseFilter):
     def __init__(
         self,
-        dataset: BaseWindowingDataset,
         orientation: Literal["le", "ge"],
         sound_level_meter: SoundLevel,
         absolute_threshold: float | None = None,
         relative_threshold: float | None = None,
     ) -> None:
-        self.dataset: BaseWindowingDataset = dataset
         self.orientation: Literal["le", "ge"] = orientation
         self.sound_level_meter: SoundLevel = sound_level_meter
 
@@ -107,7 +107,9 @@ class RMSFilter(BaseFilter):
 
         return rms
 
-    def apply(self) -> torch.Tensor:
+    def apply(self, dataset: BaseWindowingDataset) -> torch.Tensor:
+        self.dataset = dataset
+
         rms: torch.Tensor = self._get_rms(sound_level_meter=self.sound_level_meter)
 
         if self.mode == "absolute":
