@@ -15,7 +15,7 @@ from .dataset import BaseWindowingDataset
 
 class BaseFilter(ABC):
     @abstractmethod
-    def __call__(self, *args, **kwargs) -> torch.Tensor:
+    def apply(self) -> torch.Tensor:
         raise NotImplementedError
 
 
@@ -45,7 +45,7 @@ class ModelInferenceFilter(BaseFilter):
     def filter(self, logits: torch.Tensor) -> torch.Tensor: ...
 
     @torch.no_grad()
-    def __call__(self) -> torch.Tensor:
+    def apply(self) -> torch.Tensor:
         dataloader: DataLoader = DataLoader(
             dataset=self.dataset,
             batch_size=self.batch_size,
@@ -70,11 +70,13 @@ class RMSFilter(BaseFilter):
         self,
         dataset: BaseWindowingDataset,
         orientation: Literal["le", "ge"],
-        absolute_threshold: float | None,
+        sound_level_meter: SoundLevel,
+        absolute_threshold: float | None = None,
         relative_threshold: float | None = None,
     ) -> None:
         self.dataset: BaseWindowingDataset = dataset
         self.orientation: Literal["le", "ge"] = orientation
+        self.sound_level_meter: SoundLevel = sound_level_meter
 
         self.mode: Literal["absolute", "relative"]
         self.threshold: float
@@ -105,8 +107,8 @@ class RMSFilter(BaseFilter):
 
         return rms
 
-    def __call__(self, sound_level_meter: SoundLevel) -> torch.Tensor:
-        rms: torch.Tensor = self._get_rms(sound_level_meter=sound_level_meter)
+    def apply(self) -> torch.Tensor:
+        rms: torch.Tensor = self._get_rms(sound_level_meter=self.sound_level_meter)
 
         if self.mode == "absolute":
             if self.orientation == "le":
