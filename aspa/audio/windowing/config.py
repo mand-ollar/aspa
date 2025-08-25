@@ -34,6 +34,7 @@ class WindowingConfig(BaseModel):
 
     audio_folders: str | Path | list[str] | list[Path]
     audio_format: Literal["wav", "mp3", "ogg", "flac"] = "wav"
+
     classes: list[str] = Field(default_factory=list)
     similar_labels: dict[str, list[str]] = Field(default_factory=dict)
     target_sr: int = 32000
@@ -43,6 +44,7 @@ class WindowingConfig(BaseModel):
     window_size: int = int(window_sec * target_sr)
     hop_size: int = int(hop_sec * target_sr)
     start_offset: int = int(start_offset_sec * target_sr)
+
     drop_last_window: bool = False
     relative_ratio_threshold: float = 1.0
     absolute_ratio_threshold: float = 1.0
@@ -50,6 +52,7 @@ class WindowingConfig(BaseModel):
     exclude_labels: list[str] = Field(default_factory=list)
     others: str | None = None
     ignore_missing_label_files: bool = False
+
     label_file_finder: Optional[Callable[[Path], Path]] = None
     label_line_parser: Optional[Callable[[str], tuple[str, str, str]]] = None
     label_file_processor: Optional[Callable[[Path, Optional[Path]], np.ndarray]] = None
