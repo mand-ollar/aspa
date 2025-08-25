@@ -52,9 +52,9 @@ class WindowingConfig(BaseModel):
     others: str | None = None
     ignore_missing_label_files: bool = False
 
-    label_file_finder: Optional[Callable[[Path], Path]] = None
-    label_line_parser: Optional[Callable[[str], tuple[str, str, str]]] = None
-    label_file_processor: Optional[Callable[[Path, Optional[Path]], list[tuple[int, int, str]]]] = None
+    label_file_finder: Optional[Callable[[Any, Path], Path]] = None
+    label_line_parser: Optional[Callable[[Any, str], tuple[str, str, str]]] = None
+    label_file_processor: Optional[Callable[[Any, Path, Optional[Path]], list[tuple[int, int, str]]]] = None
 
     def model_post_init(self, context: Any) -> None:
         """Post initialization of the dataclass.
