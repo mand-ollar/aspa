@@ -13,7 +13,13 @@ from aspa.audio.sound_level import SoundLevel
 from .dataset import BaseWindowingDataset
 
 
-class ModelInferenceFilter(ABC):
+class BaseFilter(ABC):
+    @abstractmethod
+    def __call__(self, *args, **kwargs) -> torch.Tensor:
+        raise NotImplementedError
+
+
+class ModelInferenceFilter(BaseFilter):
     def __init__(
         self,
         model: nn.Module,
@@ -59,7 +65,7 @@ class ModelInferenceFilter(ABC):
         return self.filter(logits=logits).cpu().detach()
 
 
-class RMSFilter:
+class RMSFilter(BaseFilter):
     def __init__(
         self,
         dataset: BaseWindowingDataset,
