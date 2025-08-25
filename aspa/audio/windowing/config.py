@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional
 
-import numpy as np
 from pydantic import BaseModel, Field
 
 
