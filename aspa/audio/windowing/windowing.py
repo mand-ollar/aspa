@@ -8,7 +8,7 @@ from sklearn.model_selection import StratifiedGroupKFold  # type: ignore
 from tqdm import tqdm
 
 from .config import WindowingConfig
-from .dataset import IndexedWindowingDataset, WindowingDataset
+from .dataset import BaseWindowingDataset, IndexedWindowingDataset, WindowingDataset
 from .types import WindowingResult
 from .utils import get_duration_sec
 
@@ -457,11 +457,11 @@ class Windowing:
 
     def get_stratified_grouped_split_dataset(
         self,
-        dataset: WindowingDataset | IndexedWindowingDataset,
+        dataset: BaseWindowingDataset,
         n_splits: int,
         classes: list[str] | None = None,
         seed: int = 42,
-    ) -> dict[str, IndexedWindowingDataset]:
+    ) -> dict[str, BaseWindowingDataset]:
         x: np.ndarray = np.zeros((len(dataset),))
 
         group_paths: list[Path] = [result[0] for result in dataset.windowing_results]
@@ -474,13 +474,17 @@ class Windowing:
         sgkf: StratifiedGroupKFold = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
         sgkf.get_n_splits(X=x, y=labels, groups=groups)
 
-        best_ratio: float = 0
-        for _, (train_idx, valid_idx) in enumerate(sgkf.split(X=x, y=labels, groups=groups)):
+        for i, (train_idx, valid_idx) in enumerate(sgkf.split(X=x, y=labels, groups=groups)):
+            if i == 0:
+                best_ratio: float = len(train_idx) / len(valid_idx)
+                best_train_idx: list[int] = train_idx.tolist()
+                best_valid_idx: list[int] = valid_idx.tolist()
+
             ratio: float = len(train_idx) / len(valid_idx)
             if abs(ratio - n_splits + 1) > abs(best_ratio - n_splits + 1):
                 best_ratio = ratio
-                best_train_idx: list[int] = train_idx.tolist()
-                best_valid_idx: list[int] = valid_idx.tolist()
+                best_train_idx = train_idx.tolist()
+                best_valid_idx = valid_idx.tolist()
 
         if best_ratio == 0:
             raise ValueError("Check the dataset. There might be a problem on the split process.")

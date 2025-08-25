@@ -6,14 +6,14 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from .dataset import WindowingDataset
+from .dataset import BaseWindowingDataset
 
 
 class ModelInference(ABC):
     def __init__(
         self,
         model: nn.Module,
-        dataset: WindowingDataset,
+        dataset: BaseWindowingDataset,
         device: str | torch.device,
         batch_size: int,
         num_workers: int,
@@ -21,7 +21,7 @@ class ModelInference(ABC):
         warnings.filterwarnings("ignore", category=DeprecationWarning, module="multiprocessing")
 
         self.model: nn.Module = model
-        self.dataset: WindowingDataset = dataset
+        self.dataset: BaseWindowingDataset = dataset
         self.device: str | torch.device = device
         self.model.to(self.device).eval()
 

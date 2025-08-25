@@ -13,7 +13,19 @@ from .types import WindowingResult
 from .utils import OneItemCache, pad_audio
 
 
-class WindowingDataset(Dataset):
+class BaseWindowingDataset(Dataset):
+    labels: list[torch.Tensor]
+    windowing_results: list[tuple[Path, WindowingResult]]
+    classes: list[str]
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        raise NotImplementedError
+
+
+class WindowingDataset(BaseWindowingDataset):
     def __init__(
         self,
         config: WindowingConfig,
@@ -65,11 +77,11 @@ class WindowingDataset(Dataset):
         return windowed_audio, windowed_label
 
 
-class IndexedWindowingDataset:
-    def __init__(self, dataset: "WindowingDataset | IndexedWindowingDataset", indices: list[int]) -> None:
+class IndexedWindowingDataset(BaseWindowingDataset):
+    def __init__(self, dataset: BaseWindowingDataset, indices: list[int]) -> None:
         warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
 
-        self.dataset: WindowingDataset | IndexedWindowingDataset = dataset
+        self.dataset: BaseWindowingDataset = dataset
         self.indices: list[int] = indices
 
         self.classes: list[str] = dataset.classes
