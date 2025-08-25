@@ -55,7 +55,7 @@ class WindowingConfig(BaseModel):
 
     label_file_finder: Optional[Callable[[Path], Path]] = None
     label_line_parser: Optional[Callable[[str], tuple[str, str, str]]] = None
-    label_file_processor: Optional[Callable[[Path, Optional[Path]], np.ndarray]] = None
+    label_file_processor: Optional[Callable[[Path, Optional[Path]], list[tuple[int, int, str]]]] = None
 
     def model_post_init(self, context: Any) -> None:
         """Post initialization of the dataclass.
