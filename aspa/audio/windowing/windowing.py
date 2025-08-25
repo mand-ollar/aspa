@@ -50,6 +50,8 @@ class Windowing:
         return audio_files
 
     def _get_label_file_for_audio(self, audio_path: Path) -> Path:
+        label_path: Path
+
         for file_format in self.annotation_format_priority:
             file_format = file_format.replace(".", "")
             label_path = audio_path.with_suffix(f".{file_format}")
@@ -57,7 +59,10 @@ class Windowing:
                 return label_path
 
         if self.config.ignore_missing_label_files:
-            (label_path := Path("~/.cache/dummy_label.txt")).touch()
+            label_path = Path("~/.cache/dummy_label.txt")
+            label_path.parent.mkdir(parents=True, exist_ok=True)
+            label_path.touch()
+
             return label_path
         else:
             raise RuntimeError(
