@@ -59,7 +59,7 @@ class Windowing:
                 return label_path
 
         if self.config.ignore_missing_label_files:
-            label_path = Path("~/.cache/dummy_label.txt")
+            label_path = Path("./.cache/dummy_label.txt")
             label_path.parent.mkdir(parents=True, exist_ok=True)
             label_path.touch()
 
