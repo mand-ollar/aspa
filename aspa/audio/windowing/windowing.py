@@ -439,6 +439,9 @@ class Windowing:
                 audio_path=audio_path, verbose=verbose, show_progress=(show_progress == "each")
             )
 
+        self.oov_list.sort()
+        self.excluded_labels.sort()
+
         print("Windowing oov list:")
         print(self.oov_list)
         print()
