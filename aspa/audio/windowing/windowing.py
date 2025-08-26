@@ -474,7 +474,7 @@ class Windowing:
         unique_group_paths: list[Path] = list(set(group_paths))
         groups: np.ndarray = np.array([unique_group_paths.index(group_path) for group_path in group_paths])
 
-        labels_tensor: torch.Tensor = torch.cat(dataset.labels, dim=0)
+        labels_tensor: torch.Tensor = torch.stack(dataset.labels, dim=0)
         labels: np.ndarray = (labels_tensor.sum(dim=-1) * labels_tensor.argmax(dim=-1)).numpy()
 
         sgkf: StratifiedGroupKFold = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
