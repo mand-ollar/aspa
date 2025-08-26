@@ -19,10 +19,13 @@ def get_duration_sec(filepath: str | Path) -> float:
     filepath = Path(filepath)
 
     if filepath.suffix.lower() == ".wav":
-        with wave.open(f=str(filepath), mode="rb") as wf:
-            frames = wf.getnframes()
-            rate = wf.getframerate()
-            return frames / rate
+        try:
+            with wave.open(f=str(filepath), mode="rb") as wf:
+                frames = wf.getnframes()
+                rate = wf.getframerate()
+                return frames / rate
+        except Exception:
+            return librosa.get_duration(path=str(filepath))
     else:
         return librosa.get_duration(path=str(filepath))
 
