@@ -400,7 +400,7 @@ class Windowing:
             ) is not None:
                 return result
 
-        if len(labels) > 200:
+        if len(labels) > 1000:
             return self._windowing_for_large_labels(
                 audio_path=audio_path,
                 labels=labels,
