@@ -215,9 +215,10 @@ class Windowing:
                     labels_np["end"] > result.window_st
                 )
 
-            if self.config.include_others in ["all", "ulb"] and (sum(overlapped_mask) == 0 or n_labels == 0):
-                windowed_results[cnt] = result
-                cnt += 1
+            if sum(overlapped_mask) == 0 or n_labels == 0:
+                if self.config.include_others in ["all", "ulb"]:
+                    windowed_results[cnt] = result
+                    cnt += 1
                 continue
 
             overlapped_labels: np.ndarray = labels_np[overlapped_mask]
@@ -309,11 +310,10 @@ class Windowing:
 
             # No labels or the window is out of the label range,
             # and if including others "all" or "ulb", add the window and continue.
-            if self.config.include_others in ["all", "ulb"] and (
-                n_labels == 0 or min_st > result.window_en or max_en < result.window_st
-            ):
-                windowed_results[cnt] = result
-                cnt += 1
+            if n_labels == 0 or min_st > result.window_en or max_en < result.window_st:
+                if self.config.include_others in ["all", "ulb"]:
+                    windowed_results[cnt] = result
+                    cnt += 1
                 continue
 
             # Decide whether to start from the start or the end.
