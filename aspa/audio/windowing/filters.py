@@ -5,19 +5,17 @@ from typing import Literal
 import torch
 import torch.distributions as dist
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from aspa.audio.sound_level import SoundLevel
 
-from .dataset import BaseWindowingDataset
-
 
 class BaseFilter(ABC):
-    dataset: BaseWindowingDataset
+    dataset: Dataset
 
     @abstractmethod
-    def apply(self, dataset: BaseWindowingDataset) -> torch.Tensor:
+    def apply(self, dataset: Dataset) -> torch.Tensor:
         raise NotImplementedError
 
 
@@ -45,7 +43,7 @@ class ModelInferenceFilter(BaseFilter):
     def filter(self, logits: torch.Tensor) -> torch.Tensor: ...
 
     @torch.no_grad()
-    def apply(self, dataset: BaseWindowingDataset) -> torch.Tensor:
+    def apply(self, dataset: Dataset) -> torch.Tensor:
         self.dataset = dataset
 
         dataloader: DataLoader = DataLoader(
@@ -107,7 +105,7 @@ class RMSFilter(BaseFilter):
 
         return rms
 
-    def apply(self, dataset: BaseWindowingDataset) -> torch.Tensor:
+    def apply(self, dataset: Dataset) -> torch.Tensor:
         self.dataset = dataset
 
         rms: torch.Tensor = self._get_rms(sound_level_meter=self.sound_level_meter)
