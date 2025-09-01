@@ -189,6 +189,6 @@ class RecordService:
         self.filepath = Path(self.filepath)
         self.tmp_filepath = Path(f"/tmp/{tmp_filename}.tmp")
 
-        self.record_thread = threading.Thread(target=self._record, daemon=True)
+        self.record_thread = threading.Thread(target=self._record, daemon=False)
         self.record_thread.start()
         self.record_thread.join(timeout=0)
