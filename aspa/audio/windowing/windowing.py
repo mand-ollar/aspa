@@ -160,7 +160,7 @@ class Windowing:
         if en_int - st_int < self.config.window_size:
             found: bool = False
             for iv_label_name, similars in self.config.similar_labels.items():
-                if label_name in similars:
+                if label_name.strip() in similars:
                     found = True
                     break
 
@@ -247,7 +247,7 @@ class Windowing:
 
                 found: bool = False
                 for iv_label_name, similars in self.config.similar_labels.items():
-                    if label_name in similars:
+                    if label_name.strip() in similars:
                         if (
                             relative_ratio >= self.config.relative_ratio_threshold
                             or absolute_ratio >= self.config.absolute_ratio_threshold
@@ -349,7 +349,7 @@ class Windowing:
 
                     found: bool = False
                     for iv_label_name, similars in self.config.similar_labels.items():
-                        if label_name in similars:
+                        if label_name.strip() in similars:
                             if (
                                 relative_ratio >= self.config.relative_ratio_threshold
                                 or absolute_ratio >= self.config.absolute_ratio_threshold
