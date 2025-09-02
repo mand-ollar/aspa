@@ -1,7 +1,8 @@
 import sys
 import warnings
+from copy import copy
 from io import TextIOWrapper
-from typing import Any
+from typing import Any, Pattern, Sequence
 
 
 class DiscardOutput:
@@ -14,6 +15,9 @@ class DiscardOutput:
 
 class SuppressOutput:
     original_stdout: TextIOWrapper | Any = sys.stdout
+    warning_filters: Sequence[tuple[str, Pattern[str] | None, type[Warning], Pattern[str] | None, int]] = copy(
+        warnings.filters
+    )
 
     def suppress(self) -> None:
         """Suppress stdout."""
@@ -29,3 +33,4 @@ class SuppressOutput:
 
     def restore_warnings(self) -> None:
         warnings.resetwarnings()
+        warnings.filters = self.warning_filters
