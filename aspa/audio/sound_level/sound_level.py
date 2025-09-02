@@ -11,7 +11,8 @@ class SoundLevel:
         mode: Literal["RMS", "A-weighted"] = "RMS",
         sr: int = 16000,
         kernel_size: int = 1024,
-        avg_mode: Literal["median", "mean", "max"] = "median",
+        avg_mode: Literal["median", "mean", "max", "none"] = "median",
+        scale: Literal["dB_SPL", "raw"] = "dB_SPL",
     ) -> None:
         """Sound Level Calculator.
         Two different Sound Level calculation modes: RMS and A-weighted.
@@ -33,7 +34,8 @@ class SoundLevel:
         self.sr: int = sr
         self.kernel_size: int = kernel_size
         self.stride: int = int(kernel_size // 2)
-        self.avg_mode: Literal["median", "mean", "max"] = avg_mode
+        self.avg_mode: Literal["median", "mean", "max", "none"] = avg_mode
+        self.scale: Literal["dB_SPL", "raw"] = scale
 
     def _format_audio(self, audio: torch.Tensor) -> torch.Tensor:
         """Format audio tensor to [batch, time]"""
@@ -114,7 +116,12 @@ class SoundLevel:
         return spl_db
 
     def _get_spl_dB(self, spls: torch.Tensor) -> torch.Tensor:
-        spls = 10 * torch.log10(spls / self.reference_level**2)
+        if self.scale == "dB_SPL":
+            spls = 10 * torch.log10(spls / self.reference_level**2)
+        elif self.scale == "raw":
+            pass
+        else:
+            raise ValueError(f"Invalid scale: {self.scale}")
 
         if self.avg_mode == "median":
             return spls.median(dim=1).values
@@ -122,6 +129,8 @@ class SoundLevel:
             return spls.mean(dim=1)
         elif self.avg_mode == "max":
             return spls.max(dim=1).values
+        elif self.avg_mode == "none":
+            return spls
         else:
             raise ValueError(f"Invalid avg_mode: {self.avg_mode}")
 
