@@ -117,7 +117,7 @@ class SoundLevel:
 
     def _get_spl_dB(self, spls: torch.Tensor) -> torch.Tensor:
         if self.scale == "dB_SPL":
-            spls = 10 * torch.log10(spls / self.reference_level**2)
+            spls = 20 * torch.log10(spls / self.reference_level)
         elif self.scale == "raw":
             pass
         else:
