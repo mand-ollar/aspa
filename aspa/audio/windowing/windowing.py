@@ -295,7 +295,7 @@ class Windowing:
             }
 
         for i in tqdm(range(num_windows), desc="Windowing", leave=False, ncols=80, disable=not show_progress):
-            others: bool = False
+            others: bool = True
             skip_window: bool = False
 
             result: WindowingResult = WindowingResult(
@@ -356,10 +356,10 @@ class Windowing:
                                 break
 
                     if found:
+                        others = False
                         result.iv_name.append(iv_label_name)
                         iv_list.append(iv_label_name)
                     else:
-                        others = True
                         result.iv_name.append(self.config.others)
                         if label_name not in self.oov_list + oov_list + list(self.config.similar_labels.keys()):
                             oov_list.append(label_name)
