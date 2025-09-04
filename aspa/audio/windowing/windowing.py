@@ -454,17 +454,17 @@ class Windowing:
 
         if self.iv_list:
             print("Windowing iv list:")
-            print(self.iv_list)
+            print(*self.iv_list, sep=" ")
             print()
 
         if self.oov_list:
             print("Windowing oov list:")
-            print(self.oov_list)
+            print(*self.oov_list, sep=" ")
             print()
 
         if self.excluded_labels:
             print("Windowing excluded labels:")
-            print(self.excluded_labels)
+            print(*self.excluded_labels, sep=" ")
             print()
 
         return windows_dict
