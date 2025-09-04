@@ -176,6 +176,7 @@ class Windowing:
                     absolute_ratio=[1.0],
                     label_id=[0],
                 )
+                self.iv_list.add(label_name)
 
                 return {0: result}
 
@@ -358,7 +359,7 @@ class Windowing:
                     if found:
                         others = False
                         result.iv_name.append(iv_label_name)
-                        iv_list.append(iv_label_name)
+                        iv_list.append(label_name)
                     else:
                         result.iv_name.append(self.config.others)
                         if label_name not in self.oov_list + oov_list + list(self.config.similar_labels.keys()):
