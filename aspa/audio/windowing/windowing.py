@@ -323,6 +323,7 @@ class Windowing:
             else:
                 iterator_mode = "end"
 
+            oov_list: list[str] = []
             for j, (st_int, en_int, label_name) in iterator_dict[iterator_mode]:
                 # If there's no chance to overlap with the window, break the loop.
                 if iterator_mode == "start" and st_int > result.window_en:
@@ -362,14 +363,19 @@ class Windowing:
                     else:
                         others = True
                         result.iv_name.append(self.config.others)
-                        if label_name not in self.oov_list + list(self.config.similar_labels.keys()):
+                        if (
+                            label_name not in self.oov_list + oov_list + list(self.config.similar_labels.keys())
+                            and not skip_window
+                        ):
                             if verbose:
                                 print(f"Considering\n{label_name}\nas others.\n")
-                            self.oov_list.append(label_name)
+                            oov_list.append(label_name)
 
             # After the label loop.
             if skip_window or (others and not self._others_decision(result=result)):
                 continue
+
+            self.oov_list.extend(oov_list)
 
             windowed_results[cnt] = result
             cnt += 1
