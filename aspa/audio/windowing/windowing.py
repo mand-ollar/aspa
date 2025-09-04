@@ -19,6 +19,7 @@ class Windowing:
     def __init__(self, config: WindowingConfig) -> None:
         self.config: WindowingConfig = config
 
+        self.iv_list: set[str] = set()
         self.oov_list: list[str] = []
         self.excluded_labels: list[str] = []
 
@@ -324,6 +325,7 @@ class Windowing:
                 iterator_mode = "end"
 
             oov_list: list[str] = []
+            iv_list: list[str] = []
             for j, (st_int, en_int, label_name) in iterator_dict[iterator_mode]:
                 # If there's no chance to overlap with the window, break the loop.
                 if iterator_mode == "start" and st_int > result.window_en:
@@ -360,6 +362,7 @@ class Windowing:
 
                     if found:
                         result.iv_name.append(iv_label_name)
+                        iv_list.append(iv_label_name)
                     else:
                         others = True
                         result.iv_name.append(self.config.others)
@@ -376,6 +379,7 @@ class Windowing:
                 continue
 
             self.oov_list.extend(oov_list)
+            self.iv_list.update(iv_list)
 
             windowed_results[cnt] = result
             cnt += 1
@@ -448,13 +452,20 @@ class Windowing:
         self.oov_list.sort()
         self.excluded_labels.sort()
 
-        print("Windowing oov list:")
-        print(self.oov_list)
-        print()
+        if self.iv_list:
+            print("Windowing iv list:")
+            print(self.iv_list)
+            print()
 
-        print("Windowing excluded labels:")
-        print(self.excluded_labels)
-        print()
+        if self.oov_list:
+            print("Windowing oov list:")
+            print(self.oov_list)
+            print()
+
+        if self.excluded_labels:
+            print("Windowing excluded labels:")
+            print(self.excluded_labels)
+            print()
 
         return windows_dict
 
