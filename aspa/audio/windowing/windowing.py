@@ -20,8 +20,8 @@ class Windowing:
         self.config: WindowingConfig = config
 
         self.iv_list: set[str] = set()
-        self.oov_list: list[str] = []
-        self.excluded_labels: list[str] = []
+        self.oov_list: set[str] = set()
+        self.excluded_labels: set[str] = set()
 
         self.audio_folders: list[Path]
         if isinstance(self.config.audio_folders, (str, Path)):
@@ -198,7 +198,7 @@ class Windowing:
         labels_np: np.ndarray = np.array(labels, dtype=[("start", "i4"), ("end", "i4"), ("label", "S100")])
 
         for i in tqdm(range(num_windows), desc="Windowing", leave=False, ncols=80, disable=not show_progress):
-            others: bool = False
+            others: bool = True
             skip_window: bool = False
 
             result: WindowingResult = WindowingResult(
@@ -227,13 +227,14 @@ class Windowing:
             relative_ratios: np.ndarray = _overlaps / _window_size
             absolute_ratios: np.ndarray = _overlaps / _label_sizes
 
+            oov_list: list[str] = []
+            iv_list: list[str] = []
             for j, relative_ratio, absolute_ratio, label_name_np in zip(
                 overlapped_labels, relative_ratios, absolute_ratios, overlapped_labels["label"]
             ):
                 label_name: str = label_name_np.decode("utf-8")
                 if label_name in self.config.exclude_labels:
-                    if label_name not in self.excluded_labels:
-                        self.excluded_labels.append(label_name)
+                    self.excluded_labels.add(label_name)
                     skip_window = True
                     break
 
@@ -253,18 +254,20 @@ class Windowing:
                             break
 
                 if found:
+                    others = False
                     result.iv_name.append(iv_label_name)
+                    iv_list.append(label_name)
                 else:
-                    others = True
                     result.iv_name.append(self.config.others)
-                    if label_name not in self.oov_list + list(self.config.similar_labels.keys()):
-                        if verbose:
-                            print(f"Considering\n{label_name}\nas others.\n")
-                        self.oov_list.append(label_name)
+                    if label_name not in oov_list + list(self.config.similar_labels.keys()):
+                        oov_list.append(label_name)
 
             # After the label loop.
             if skip_window or (others and not self._others_decision(result=result)):
                 continue
+
+            self.oov_list.update(oov_list)
+            self.iv_list.update(iv_list)
 
             windowed_results[cnt] = result
             cnt += 1
@@ -332,8 +335,7 @@ class Windowing:
                 if st_int < result.window_en and en_int > result.window_st:
                     # No matter how much the ratio is, if the label is in the exclude labels, skip the window.
                     if label_name in self.config.exclude_labels:
-                        if label_name not in self.excluded_labels:
-                            self.excluded_labels.append(label_name)
+                        self.excluded_labels.add(label_name)
                         skip_window = True
                         break
 
@@ -362,14 +364,14 @@ class Windowing:
                         iv_list.append(label_name)
                     else:
                         result.iv_name.append(self.config.others)
-                        if label_name not in self.oov_list + oov_list + list(self.config.similar_labels.keys()):
+                        if label_name not in oov_list + list(self.config.similar_labels.keys()):
                             oov_list.append(label_name)
 
             # After the label loop.
             if skip_window or (others and not self._others_decision(result=result)):
                 continue
 
-            self.oov_list.extend(oov_list)
+            self.oov_list.update(oov_list)
             self.iv_list.update(iv_list)
 
             windowed_results[cnt] = result
@@ -440,22 +442,19 @@ class Windowing:
                 audio_path=audio_path, verbose=verbose, show_progress=(show_progress == "each")
             )
 
-        self.oov_list.sort()
-        self.excluded_labels.sort()
-
-        if self.iv_list:
+        if sorted(list(self.iv_list)):
             print("Windowing iv list:")
             for lb in self.iv_list:
                 print(f" - {lb}")
             print()
 
-        if self.oov_list:
+        if sorted(list(self.oov_list)):
             print("Windowing oov list:")
             for lb in self.oov_list:
                 print(f" - {lb}")
             print()
 
-        if self.excluded_labels:
+        if sorted(list(self.excluded_labels)):
             print("Windowing excluded labels:")
             for lb in self.excluded_labels:
                 print(f" - {lb}")
