@@ -252,6 +252,8 @@ class Windowing:
                         ):
                             found = True
                             break
+                        else:
+                            skip_window = True
 
                 if found:
                     others = False
@@ -287,16 +289,19 @@ class Windowing:
 
         n_labels: int = len(labels)
 
+        iterator_dict: dict[Literal["start", "end"], list[tuple[int, tuple[int, int, str]]]]
         if n_labels > 0:
             st_sorted_labels: list[tuple[int, int, str]] = sorted(labels, key=lambda x: x[0])
             en_sorted_labels: list[tuple[int, int, str]] = sorted(labels, key=lambda x: x[1])
             min_st: int = st_sorted_labels[0][0]
             max_en: int = en_sorted_labels[-1][1]
 
-            iterator_dict: dict[Literal["start", "end"], list[tuple[int, tuple[int, int, str]]]] = {
+            iterator_dict = {
                 "start": list(enumerate(st_sorted_labels)),
                 "end": list(enumerate(en_sorted_labels))[::-1],
             }
+        else:
+            iterator_dict = {}
 
         for i in tqdm(range(num_windows), desc="Windowing", leave=False, ncols=80, disable=not show_progress):
             others: bool = True
@@ -357,6 +362,8 @@ class Windowing:
                             ):
                                 found = True
                                 break
+                            else:
+                                skip_window = True
 
                     if found:
                         others = False
