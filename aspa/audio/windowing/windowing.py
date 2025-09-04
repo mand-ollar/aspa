@@ -168,11 +168,6 @@ class Windowing:
             if found:
                 result: WindowingResult = WindowingResult(
                     audio_path=audio_path,
-                    # window_st=max((en_int + st_int) // 2 - self.config.window_size // 2, 0),
-                    # window_en=min(
-                    #     (en_int + st_int) // 2 - self.config.window_size // 2 + self.config.window_size,
-                    #     audio_length,
-                    # ),
                     window_st=st_int,
                     window_en=min(en_int, audio_length),
                     iv_name=[iv_label_name],
@@ -366,12 +361,7 @@ class Windowing:
                     else:
                         others = True
                         result.iv_name.append(self.config.others)
-                        if (
-                            label_name not in self.oov_list + oov_list + list(self.config.similar_labels.keys())
-                            and not skip_window
-                        ):
-                            if verbose:
-                                print(f"Considering\n{label_name}\nas others.\n")
+                        if label_name not in self.oov_list + oov_list + list(self.config.similar_labels.keys()):
                             oov_list.append(label_name)
 
             # After the label loop.
@@ -454,17 +444,20 @@ class Windowing:
 
         if self.iv_list:
             print("Windowing iv list:")
-            print(*self.iv_list, sep=" ")
+            for lb in self.iv_list:
+                print(f" - {lb}")
             print()
 
         if self.oov_list:
             print("Windowing oov list:")
-            print(*self.oov_list, sep=" ")
+            for lb in self.oov_list:
+                print(f" - {lb}")
             print()
 
         if self.excluded_labels:
             print("Windowing excluded labels:")
-            print(*self.excluded_labels, sep=" ")
+            for lb in self.excluded_labels:
+                print(f" - {lb}")
             print()
 
         return windows_dict
