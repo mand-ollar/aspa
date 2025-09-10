@@ -68,6 +68,8 @@ class WindowingDataset(BaseWindowingDataset):
         else:
             audio, sr = torchaudio.load(uri=str(audio_path))
             audio = format_audio(audio=audio, sr=sr, new_sr=self.config.target_sr, target_dim=2)
+            if audio.size(0) != 1:
+                audio = audio.mean(dim=0, keepdim=True)
             self.cache_audio[audio_path] = audio
 
         windowed_audio: torch.Tensor = audio[:, windowing_result.window_st : windowing_result.window_en]
