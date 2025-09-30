@@ -486,6 +486,7 @@ class Windowing:
         dataset: BaseWindowingDataset,
         n_splits: int,
         split_mode: Literal["train_valid", "train_valid_test"] = "train_valid",
+        custom_label: np.ndarray | None = None,
         custom_group: np.ndarray | None = None,
         classes: list[str] | None = None,
         seed: int = 42,
@@ -500,8 +501,12 @@ class Windowing:
         else:
             groups = custom_group
 
-        labels_tensor: torch.Tensor = torch.stack(dataset.labels, dim=0)
-        labels: np.ndarray = (labels_tensor.sum(dim=-1) * labels_tensor.argmax(dim=-1)).numpy()
+        labels: np.ndarray
+        if custom_label is None:
+            labels_tensor: torch.Tensor = torch.stack(dataset.labels, dim=0)
+            labels = (labels_tensor.sum(dim=-1) * labels_tensor.argmax(dim=-1)).numpy()
+        else:
+            labels = custom_label
 
         sgkf: StratifiedGroupKFold = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
         sgkf.get_n_splits(X=x, y=labels, groups=groups)
