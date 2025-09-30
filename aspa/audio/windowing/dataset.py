@@ -72,7 +72,7 @@ class WindowingDataset(BaseWindowingDataset):
                 audio = audio.mean(dim=0, keepdim=True)
             self.cache_audio[audio_path] = audio
 
-        windowed_audio: torch.Tensor = audio[:, windowing_result.window_st : windowing_result.window_en]
+        windowed_audio: torch.Tensor = audio[:, int(windowing_result.window_st) : int(windowing_result.window_en)]
         windowed_audio = pad_audio(audio=windowed_audio, target_length=self.config.window_size, dim=1)
         windowed_label: torch.Tensor = self.labels[idx]
 
