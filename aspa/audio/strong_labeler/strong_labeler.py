@@ -9,18 +9,17 @@ import torch
 
 
 class StrongLabeler:
-    def __init__(self) -> None:
-        self.data: torch.Tensor
-        self.sr: int
-        self.outline_step: float
-        self.abs_norm_data: torch.Tensor
-        self.outline: torch.Tensor
-        self.step: int
-        self.min_target_sec: float
-        self.min_gap_sec: float
-        self.threshold: float
-        self.st_labels: list[int]
-        self.en_labels: list[int]
+    data: torch.Tensor
+    sr: int
+    outline_step: float
+    abs_norm_data: torch.Tensor
+    outline: torch.Tensor
+    step: int
+    min_target_sec: float
+    min_gap_sec: float
+    threshold: float
+    st_labels: list[int]
+    en_labels: list[int]
 
     def _get_outline(self) -> None:
         """
