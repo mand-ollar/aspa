@@ -410,7 +410,7 @@ class Windowing:
             ) is not None:
                 return result
 
-        if len(labels) > 1000:
+        if len(labels) > 10000:
             return self._windowing_for_large_labels(
                 audio_path=audio_path,
                 labels=labels,
@@ -485,6 +485,7 @@ class Windowing:
         self,
         dataset: BaseWindowingDataset,
         n_splits: int,
+        split_mode: Literal["train_valid", "train_valid_test"] = "train_valid",
         classes: list[str] | None = None,
         seed: int = 42,
     ) -> dict[str, BaseWindowingDataset]:
@@ -500,22 +501,26 @@ class Windowing:
         sgkf: StratifiedGroupKFold = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
         sgkf.get_n_splits(X=x, y=labels, groups=groups)
 
-        for i, (train_idx, valid_idx) in enumerate(sgkf.split(X=x, y=labels, groups=groups)):
-            if i == 0:
-                best_ratio: float = len(train_idx) / len(valid_idx)
-                best_train_idx: list[int] = train_idx.tolist()
-                best_valid_idx: list[int] = valid_idx.tolist()
+        fold_indices: list[list[int]] = []
+        for _, indices in sgkf.split(X=x, y=labels, groups=groups):
+            fold_indices.append(indices.tolist())
 
-            ratio: float = len(train_idx) / len(valid_idx)
-            if abs(ratio - n_splits + 1) > abs(best_ratio - n_splits + 1):
-                best_ratio = ratio
-                best_train_idx = train_idx.tolist()
-                best_valid_idx = valid_idx.tolist()
+        if split_mode == "train_valid":
+            return {
+                "train": IndexedWindowingDataset(
+                    dataset=dataset, indices=[i for fold in fold_indices[0:-1] for i in fold]
+                ),
+                "valid": IndexedWindowingDataset(dataset=dataset, indices=fold_indices[-1]),
+            }
 
-        if best_ratio == 0:
-            raise ValueError("Check the dataset. There might be a problem on the split process.")
+        elif split_mode == "train_valid_test":
+            return {
+                "train": IndexedWindowingDataset(
+                    dataset=dataset, indices=[i for fold in fold_indices[0:-2] for i in fold]
+                ),
+                "valid": IndexedWindowingDataset(dataset=dataset, indices=fold_indices[-2]),
+                "test": IndexedWindowingDataset(dataset=dataset, indices=fold_indices[-1]),
+            }
 
-        return {
-            "train": IndexedWindowingDataset(dataset=dataset, indices=best_train_idx),
-            "valid": IndexedWindowingDataset(dataset=dataset, indices=best_valid_idx),
-        }
+        else:
+            raise ValueError(f"Invalid split mode: {split_mode}")
