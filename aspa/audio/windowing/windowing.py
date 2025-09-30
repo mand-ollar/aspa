@@ -486,14 +486,19 @@ class Windowing:
         dataset: BaseWindowingDataset,
         n_splits: int,
         split_mode: Literal["train_valid", "train_valid_test"] = "train_valid",
+        custom_group: np.ndarray | None = None,
         classes: list[str] | None = None,
         seed: int = 42,
     ) -> dict[str, BaseWindowingDataset]:
         x: np.ndarray = np.zeros((len(dataset),))
 
-        group_paths: list[Path] = [result[0] for result in dataset.windowing_results]
-        unique_group_paths: list[Path] = list(set(group_paths))
-        groups: np.ndarray = np.array([unique_group_paths.index(group_path) for group_path in group_paths])
+        groups: np.ndarray
+        if custom_group is None:
+            group_paths: list[Path] = [result[0] for result in dataset.windowing_results]
+            unique_group_paths: list[Path] = list(set(group_paths))
+            groups = np.array([unique_group_paths.index(group_path) for group_path in group_paths])
+        else:
+            groups = custom_group
 
         labels_tensor: torch.Tensor = torch.stack(dataset.labels, dim=0)
         labels: np.ndarray = (labels_tensor.sum(dim=-1) * labels_tensor.argmax(dim=-1)).numpy()
@@ -502,8 +507,21 @@ class Windowing:
         sgkf.get_n_splits(X=x, y=labels, groups=groups)
 
         fold_indices: list[list[int]] = []
-        for _, indices in sgkf.split(X=x, y=labels, groups=groups):
-            fold_indices.append(indices.tolist())
+        try:
+            fold_indices = []
+
+            for _, indices in sgkf.split(X=x, y=labels, groups=groups):
+                fold_indices.append(indices.tolist())
+
+        except ValueError:
+            fold_indices = []
+
+            n_splits = len(np.unique(labels))
+            sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+            sgkf.get_n_splits(X=x, y=labels, groups=groups)
+
+            for _, indices in sgkf.split(X=x, y=labels, groups=groups):
+                fold_indices.append(indices.tolist())
 
         if split_mode == "train_valid":
             return {
