@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -41,3 +42,14 @@ class WindowingResult:
         print(f"Relative ratio: {self.relative_ratio}")
         print(f"Absolute ratio: {self.absolute_ratio}")
         print()
+
+    def __str__(self) -> str:
+        return json.dumps({
+            "audio_path": str(self.audio_path),
+            "window_st": self.window_st,
+            "window_en": self.window_en,
+            "iv_name": self.iv_name,
+            "label_name": self.label_name,
+            "relative_ratio": self.relative_ratio,
+            "absolute_ratio": self.absolute_ratio,
+        })
