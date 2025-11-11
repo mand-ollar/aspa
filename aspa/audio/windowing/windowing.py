@@ -259,26 +259,48 @@ class Windowing:
                     result.absolute_ratio.append(absolute_ratio)
                     result.label_id.append(j)
 
-                    found: bool = False
-                    for iv_label_name, similars in self.config.similar_labels.items():
-                        if label_name.strip() in similars:
-                            if (
-                                relative_ratio >= self.config.relative_ratio_threshold
-                                or absolute_ratio >= self.config.absolute_ratio_threshold
-                            ):
-                                found = True
-                                break
-                            else:
-                                skip_window = True
+            # Combine the ratios
+            label_set: set[str] = set(result.label_name)
+            label_name_list: list[str] = []
+            relative_ratio_list: list[float] = []
+            absolute_ratio_list: list[float] = []
+            for label in label_set:
+                indices: list[int] = [i for i, label_name in enumerate(result.label_name) if label_name == label]
 
-                    if found:
-                        others = False
-                        result.iv_name.append(iv_label_name)
-                        iv_list.append(label_name)
-                    else:
-                        result.iv_name.append(self.config.others)
-                        if label_name not in oov_list + list(self.config.similar_labels.keys()):
-                            oov_list.append(label_name)
+                relative_ratio_sum: float = sum([result.relative_ratio[i] for i in indices])
+                absolute_ratio_max: float = max([result.absolute_ratio[i] for i in indices])
+
+                label_name_list.append(label)
+                relative_ratio_list.append(relative_ratio_sum)
+                absolute_ratio_list.append(absolute_ratio_max)
+
+            result.label_name = label_name_list
+            result.relative_ratio = relative_ratio_list
+            result.absolute_ratio = absolute_ratio_list
+
+            for label_name, relative_ratio, absolute_ratio in zip(
+                label_name_list, relative_ratio_list, absolute_ratio_list
+            ):
+                found: bool = False
+                for iv_label_name, similars in self.config.similar_labels.items():
+                    if label_name.strip() in similars:
+                        if (
+                            relative_ratio >= self.config.relative_ratio_threshold
+                            or absolute_ratio >= self.config.absolute_ratio_threshold
+                        ):
+                            found = True
+                            break
+                        else:
+                            skip_window = True
+
+                if found:
+                    others = False
+                    result.iv_name.append(iv_label_name)
+                    iv_list.append(label_name)
+                else:
+                    result.iv_name.append(self.config.others)
+                    if label_name not in oov_list + list(self.config.similar_labels.keys()):
+                        oov_list.append(label_name)
 
             # After the label loop.
             if skip_window or (others and not self._others_decision(result=result)):
